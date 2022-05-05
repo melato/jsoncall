@@ -123,46 +123,6 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method) {
 	fmt.Fprintf(w, "\n}\n")
 }
 
-func (g *Generator) generateMethodV(w io.Writer, m reflect.Method) {
-	var errorp *error
-	errorType := reflect.TypeOf(errorp).Elem()
-	numOut := m.Type.NumOut()
-	if g.InternalTypePrefix != "" {
-
-	}
-	if numOut > 0 {
-		fmt.Fprintf(w, "\ntype %s%s struct {", g.InternalTypePrefix, m.Name)
-		for j := 0; j < numOut; j++ {
-			out := m.Type.Out(j)
-			fmt.Fprintf(w, "  %P%d %s\n", j+1, out.String())
-		}
-		fmt.Fprintf(w, "}\n")
-	}
-	g.writeMethodHeader(w, m)
-	fmt.Fprintf(w, "  result := t.Client.Call(\"%s\")\n", m.Name)
-
-	for j := 0; j < numOut; j++ {
-		out := m.Type.Out(j)
-		if out == errorType {
-			fmt.Fprintf(w, `  var x%d error
-  if result[%d] != nil {
-	 x%d = result[%d].(error)
-  }
-`, j, j, j, j)
-		} else {
-			fmt.Fprintf(w, "  var x%d %s = result[%d].(%s)\n", j, out.String(), j, out.String())
-		}
-	}
-	fmt.Fprintf(w, "  return")
-	for j := 0; j < numOut; j++ {
-		if j > 0 {
-			fmt.Fprintf(w, ",")
-		}
-		fmt.Fprintf(w, " x%d", j)
-	}
-	fmt.Fprintf(w, "\n}\n")
-}
-
 // GenerateType - Generate a type that implements the methods of type <t>
 func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
 	w := &bytes.Buffer{}
@@ -183,11 +143,7 @@ func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
 		if !m.IsExported() {
 			continue
 		}
-		if g.InternalTypePrefix != "" {
-			g.generateMethodStruct(w, m)
-		} else {
-			g.generateMethodV(w, m)
-		}
+		g.generateMethodStruct(w, m)
 	}
 	return w.Bytes(), nil
 }

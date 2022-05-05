@@ -84,14 +84,6 @@ func (t *Client) callData(m *Method, args []interface{}) ([]byte, error) {
 	return nil, t.responseError(response, data)
 }
 
-func (t *Client) CallE(m *Method, args ...interface{}) ([]interface{}, error) {
-	data, err := t.callData(m, args)
-	if err != nil {
-		return nil, ToError(err)
-	}
-	return m.unmarshalOutputs(data)
-}
-
 func (t *Client) CallVM(result interface{}, m *Method, args ...interface{}) error {
 	data, err := t.callData(m, args)
 	if err != nil {
@@ -106,36 +98,6 @@ func (t *Client) CallV(result interface{}, name string, args ...interface{}) err
 		return Errorf("no such method: %s", name)
 	}
 	return t.CallVM(result, m, args...)
-}
-
-func (t *Client) Call(name string, args ...interface{}) []interface{} {
-	m := t.caller.Methods[name]
-	var out []interface{}
-	var err error
-	if m != nil {
-		out, err = t.CallE(m, args...)
-		if err == nil {
-			return out
-		}
-	} else {
-		fmt.Printf("methods: %d\n", len(t.caller.Methods))
-		panic(fmt.Sprintf("no such method: %s", name))
-	}
-	err = ToError(err)
-	mType := m.Method.Type
-	numOut := mType.NumOut()
-	out = make([]interface{}, mType.NumOut())
-	for i := 0; i < numOut; i++ {
-		var v interface{}
-		if m.OutErrors[i] {
-			v = err
-		} else {
-			zero := reflect.Zero(mType.Out(i))
-			v = zero.Interface()
-		}
-		out[i] = v
-	}
-	return out
 }
 
 func (t *Client) ToError(v interface{}) error {

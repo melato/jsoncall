@@ -3,8 +3,6 @@
 package client
 
 import (
-	"reflect"
-
 	"melato.org/jsoncall"
 	"melato.org/jsoncall/demo"
 )
@@ -13,8 +11,7 @@ func NewClient(url string) (demo.Demo, error) {
 	c := &GeneratedClient{}
 	var api *demo.Demo
 	var err error
-	//c.Client, err = jsoncall.NewClientP(api)
-	c.Client, err = jsoncall.NewClient(reflect.TypeOf(api).Elem())
+	c.Client, err = jsoncall.NewClientP(api)
 	if err != nil {
 		return nil, err
 	}

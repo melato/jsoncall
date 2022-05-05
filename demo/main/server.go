@@ -15,9 +15,9 @@ type GenerateOp struct {
 
 func (t *GenerateOp) Init() error {
 	g := &t.Generator
+	g.Init()
 	g.Package = "client"
 	g.Type = "GeneratedClient"
-	g.InternalTypePrefix = "r"
 	g.OutputFile = "../client/generated_client.go"
 	return nil
 }
