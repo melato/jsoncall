@@ -3,6 +3,7 @@ package generate
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 )
@@ -43,6 +44,58 @@ func (g *Generator) GenerateP(v interface{}) ([]byte, error) {
 	return g.GenerateType(t)
 }
 
+func (g *Generator) generateMethod(w io.Writer, m reflect.Method) {
+	var errorp *error
+	errorType := reflect.TypeOf(errorp).Elem()
+	fmt.Fprintf(w, "\nfunc (t *%s) %s(", g.Type, m.Name)
+	numIn := m.Type.NumIn()
+	for j := 0; j < numIn; j++ {
+		in := m.Type.In(j)
+		if j > 0 {
+			fmt.Fprintf(w, ", ")
+		}
+		fmt.Fprintf(w, "p%d %s", j, in.String())
+	}
+	fmt.Fprintf(w, ") ")
+	numOut := m.Type.NumOut()
+	if numOut > 1 {
+		fmt.Fprintf(w, "(")
+	}
+	for j := 0; j < numOut; j++ {
+		out := m.Type.Out(j)
+		if j > 0 {
+			fmt.Fprintf(w, ", ")
+		}
+		fmt.Fprintf(w, "%s", out.String())
+	}
+	if numOut > 1 {
+		fmt.Fprintf(w, ") ")
+	}
+	fmt.Fprintf(w, "{\n")
+	fmt.Fprintf(w, "  result := t.Client.Call(\"%s\")\n", m.Name)
+
+	for j := 0; j < numOut; j++ {
+		out := m.Type.Out(j)
+		if out == errorType {
+			fmt.Fprintf(w, `  var x%d error
+  if result[%d] != nil {
+	 x%d = result[%d].(error)
+  }
+`, j, j, j, j)
+		} else {
+			fmt.Fprintf(w, "  var x%d %s = result[%d].(%s)\n", j, out.String(), j, out.String())
+		}
+	}
+	fmt.Fprintf(w, "  return")
+	for j := 0; j < numOut; j++ {
+		if j > 0 {
+			fmt.Fprintf(w, ",")
+		}
+		fmt.Fprintf(w, " x%d", j)
+	}
+	fmt.Fprintf(w, "\n}\n")
+}
+
 // GenerateType - Generate a type that implements the methods of type <t>
 func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
 	w := &bytes.Buffer{}
@@ -58,60 +111,12 @@ func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
 	fmt.Fprintf(w, "  Client   *jsoncall.Client\n")
 	fmt.Fprintf(w, "}\n")
 	n := t.NumMethod()
-	var errorp *error
-	errorType := reflect.TypeOf(errorp).Elem()
 	for i := 0; i < n; i++ {
 		m := t.Method(i)
 		if !m.IsExported() {
 			continue
 		}
-		fmt.Fprintf(w, "\nfunc (t *%s) %s(", g.Type, m.Name)
-		numIn := m.Type.NumIn()
-		for j := 0; j < numIn; j++ {
-			in := m.Type.In(j)
-			if j > 0 {
-				fmt.Fprintf(w, ", ")
-			}
-			fmt.Fprintf(w, "p%d %s", j, in.String())
-		}
-		fmt.Fprintf(w, ") ")
-		numOut := m.Type.NumOut()
-		if numOut > 1 {
-			fmt.Fprintf(w, "(")
-		}
-		for j := 0; j < numOut; j++ {
-			out := m.Type.Out(j)
-			if j > 0 {
-				fmt.Fprintf(w, ", ")
-			}
-			fmt.Fprintf(w, "%s", out.String())
-		}
-		if numOut > 1 {
-			fmt.Fprintf(w, ") ")
-		}
-		fmt.Fprintf(w, "{\n")
-		fmt.Fprintf(w, "  result := t.Client.Call(\"%s\")\n", m.Name)
-
-		for j := 0; j < numOut; j++ {
-			out := m.Type.Out(j)
-			if out == errorType {
-				fmt.Fprintf(w, `  var x%d error
-  if result[%d] != nil {
-	 x%d = result[%d].(error)
-  }
-`, j, j, j, j)
-			} else {
-				fmt.Fprintf(w, "  var x%d %s = result[%d].(%s)\n", j, out.String(), j, out.String())
-			}
-		}
-		fmt.Fprintf(w, "  return")
-		for j := 0; j < numOut; j++ {
-			if j > 0 {
-				fmt.Fprintf(w, ",")
-			}
-			fmt.Fprintf(w, " x%d", j)
-		}
-		fmt.Fprintf(w, "\n}\n")
+		g.generateMethod(w, m)
 	}
 	return w.Bytes(), nil
 }
