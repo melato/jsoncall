@@ -1,8 +1,8 @@
 package jsoncall
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 )
 
@@ -46,8 +46,8 @@ func newCaller() *Caller {
 func TestJsonCallSet(t *testing.T) {
 	c := newCaller()
 	i := &TestImpl{}
-	data, err := c.Call("SetA", i, []byte(`{"P1": 7}`))
-	if err != nil {
+	data, code, err := c.Call("SetA", i, []byte(`{"P1": 7}`))
+	if err != nil || code != ErrNone {
 		t.Errorf("error %v", err)
 	}
 	if i.A != 7 {
@@ -60,7 +60,7 @@ func TestJsonCallGet(t *testing.T) {
 	c := newCaller()
 	i := &TestImpl{}
 	i.A = 13
-	data, err := c.Call("GetA", i, []byte(`{}`))
+	data, _, err := c.Call("GetA", i, []byte(`{}`))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -71,6 +71,10 @@ func TestJsonCallGet(t *testing.T) {
 	}
 }
 
+type rDiv struct {
+	P1 int32
+}
+
 func TestJsonCallDiv(t *testing.T) {
 	c := newCaller()
 	TraceData = true
@@ -79,38 +83,29 @@ func TestJsonCallDiv(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal error: %v", err)
 	}
-	data, err = c.Call("Div", i, data)
-	if err != nil {
-		t.Fatalf("call error: %v", err)
+	data, code, err := c.Call("Div", i, data)
+	if err != nil || code != ErrNone {
+		t.Fatalf("call error code: %v, err: %v", code, err)
 	}
 	m := c.Methods["Div"]
 	if m == nil {
 		t.Fatalf("method not found")
 	}
-	n := m.OutType.NumField()
-	for i := 0; i < n; i++ {
-		fmt.Printf("field[%d] type: %v\n", i, m.OutType.Field(i).Type)
-	}
 	fmt.Printf("%v\n", string(data))
-	out, err := m.unmarshalOutputs(data)
-	result := out[0].(int32)
-	if result != 1 {
+	var out rDiv
+	err = json.Unmarshal(data, &out)
+	if err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if out.P1 != 1 {
 		t.Fatalf("incorrect int result")
-	}
-	var divError error
-	if out[1] != nil {
-		divError = out[1].(error)
-	}
-	fmt.Printf("error type: %v\n", reflect.TypeOf(divError))
-	if divError != nil {
-		t.Fatalf("error is not nil")
 	}
 }
 
 func TestJsonCallError(t *testing.T) {
 	c := newCaller()
 	i := &TestImpl{}
-	data, err := c.Call("Div", i, []byte(`{"P1":3,"P2":0}`))
+	data, _, err := c.Call("Div", i, []byte(`{"P1":3,"P2":0}`))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}

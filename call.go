@@ -121,31 +121,6 @@ func (m *Method) unmarshalInputs(receiver interface{}, data []byte) ([]reflect.V
 	return in, nil
 }
 
-func (m *Method) unmarshalOutputs(data []byte) ([]interface{}, error) {
-	numOut := m.Method.Type.NumOut()
-	if numOut == 0 {
-		return nil, nil
-	}
-	out := make([]interface{}, numOut)
-	a := reflect.New(m.OutType)
-	v := a.Interface()
-	err := json.Unmarshal(data, &v)
-	if err != nil {
-		return nil, err
-	}
-	a = a.Elem()
-	for i := 0; i < numOut; i++ {
-		v := a.Field(i)
-		if TraceData {
-			fmt.Printf("out[%d] type: %v\n", i, reflect.TypeOf(v.Interface()))
-		}
-		if !v.IsZero() {
-			out[i] = v.Interface()
-		}
-	}
-	return out, nil
-}
-
 // marshalOutputs - convert outputs as returned from a method call to JSON data
 // The outputs are marshalled to JSON as follows:
 // If the last output is of type error, and it is not nil, return nil, *Error
