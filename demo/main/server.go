@@ -17,6 +17,7 @@ func (t *GenerateOp) Init() error {
 	g := &t.Generator
 	g.Package = "client"
 	g.Type = "GeneratedClient"
+	g.InternalTypePrefix = "r"
 	g.OutputFile = "../client/generated_client.go"
 	return nil
 }
@@ -68,6 +69,6 @@ func main() {
 	cmd.Command("generate").Flags(&generateOp).RunFunc(generateOp.Generate)
 
 	var serverOps Server
-	cmd.Command("server").Flags(&serverOps).RunFunc(serverOps.Run)
+	cmd.Command("listen").Flags(&serverOps).RunFunc(serverOps.Run)
 	command.Main(&cmd)
 }

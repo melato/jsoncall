@@ -174,26 +174,26 @@ func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, error) {
 // arguments and return values are marshalled as a map, with keys "P1", "P2", ...
 // If the last output is of type error, it is unmashalled as *Error
 // If there is an error in unmarshalling/marshalling, return nil, *Error
-func (t *Caller) Call(name string, receiver interface{}, jsonIn []byte) ([]byte, error) {
+func (t *Caller) Call(name string, receiver interface{}, jsonIn []byte) ([]byte, ErrorCode, error) {
 	if TraceCalls {
 		fmt.Printf("%v.%s(%s)\n", reflect.TypeOf(receiver), name, string(jsonIn))
 	}
 	m := t.Methods[name]
 	if m == nil {
-		return nil, Errorf("unknown method: %v.%s", t.Api, name)
+		return nil, ErrNoSuchMethod, Errorf("unknown method: %v.%s", t.Api, name)
 	}
 
 	in, err := m.unmarshalInputs(receiver, jsonIn)
 	if err != nil {
-		return nil, &Error{err.Error()}
+		return nil, ErrMarshal, &Error{err.Error()}
 	}
 	out := m.Method.Func.Call(in)
 	outputData, err := m.marshalOutputs(out)
 	if err != nil {
-		return nil, err
+		return nil, ErrMarshal, err
 	}
 	if TraceCalls {
 		fmt.Printf("result: %s\n", string(outputData))
 	}
-	return outputData, nil
+	return outputData, ErrNone, nil
 }

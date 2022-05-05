@@ -10,10 +10,16 @@ import (
 
 // Generator - generates client Go code for a web service that uses the jsoncall conventions
 type Generator struct {
-	Package    string
-	Type       string
-	Imports    []string
-	OutputFile string
+	Package            string
+	Type               string
+	Imports            []string
+	InternalTypePrefix string
+	OutputFile         string
+}
+
+func (t *Generator) Init() error {
+	t.InternalTypePrefix = "r"
+	return nil
 }
 
 func (t *Generator) Configured() error {
@@ -44,9 +50,7 @@ func (g *Generator) GenerateP(v interface{}) ([]byte, error) {
 	return g.GenerateType(t)
 }
 
-func (g *Generator) generateMethod(w io.Writer, m reflect.Method) {
-	var errorp *error
-	errorType := reflect.TypeOf(errorp).Elem()
+func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
 	fmt.Fprintf(w, "\nfunc (t *%s) %s(", g.Type, m.Name)
 	numIn := m.Type.NumIn()
 	for j := 0; j < numIn; j++ {
@@ -72,6 +76,69 @@ func (g *Generator) generateMethod(w io.Writer, m reflect.Method) {
 		fmt.Fprintf(w, ") ")
 	}
 	fmt.Fprintf(w, "{\n")
+}
+
+func (g *Generator) writeMethodInputs(w io.Writer, m reflect.Method) {
+	numIn := m.Type.NumIn()
+	for j := 0; j < numIn; j++ {
+		fmt.Fprintf(w, ", p%d", j)
+	}
+	fmt.Fprintf(w, ")\n")
+}
+
+func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method) {
+	var errorp *error
+	errorType := reflect.TypeOf(errorp).Elem()
+	numOut := m.Type.NumOut()
+	structType := g.InternalTypePrefix + m.Name
+	if numOut > 0 {
+		fmt.Fprintf(w, "\ntype %s struct {\n", structType)
+		for j := 0; j < numOut; j++ {
+			out := m.Type.Out(j)
+			outType := out.String()
+			if out != errorType {
+				fmt.Fprintf(w, "  P%d %s\n", j+1, outType)
+			}
+			//fmt.Fprintf(w, "  P%d *jsoncall.Error\n", j+1)
+		}
+		fmt.Fprintf(w, "}\n")
+	}
+	g.writeMethodHeader(w, m)
+	fmt.Fprintf(w, "  var out %s\n", structType)
+	fmt.Fprintf(w, "  err := t.Client.CallV(&out, \"%s\"", m.Name)
+	g.writeMethodInputs(w, m)
+
+	fmt.Fprintf(w, "  return ")
+	for j := 0; j < numOut; j++ {
+		if j > 0 {
+			fmt.Fprintf(w, ",")
+		}
+		out := m.Type.Out(j)
+		if out == errorType {
+			fmt.Fprintf(w, " err")
+		} else {
+			fmt.Fprintf(w, " out.P%d", j+1)
+		}
+	}
+	fmt.Fprintf(w, "\n}\n")
+}
+
+func (g *Generator) generateMethodV(w io.Writer, m reflect.Method) {
+	var errorp *error
+	errorType := reflect.TypeOf(errorp).Elem()
+	numOut := m.Type.NumOut()
+	if g.InternalTypePrefix != "" {
+
+	}
+	if numOut > 0 {
+		fmt.Fprintf(w, "\ntype %s%s struct {", g.InternalTypePrefix, m.Name)
+		for j := 0; j < numOut; j++ {
+			out := m.Type.Out(j)
+			fmt.Fprintf(w, "  %P%d %s\n", j+1, out.String())
+		}
+		fmt.Fprintf(w, "}\n")
+	}
+	g.writeMethodHeader(w, m)
 	fmt.Fprintf(w, "  result := t.Client.Call(\"%s\")\n", m.Name)
 
 	for j := 0; j < numOut; j++ {
@@ -116,7 +183,11 @@ func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
 		if !m.IsExported() {
 			continue
 		}
-		g.generateMethod(w, m)
+		if g.InternalTypePrefix != "" {
+			g.generateMethodStruct(w, m)
+		} else {
+			g.generateMethodV(w, m)
+		}
 	}
 	return w.Bytes(), nil
 }

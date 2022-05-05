@@ -92,19 +92,20 @@ func (t *Client) CallE(m *Method, args ...interface{}) ([]interface{}, error) {
 	return m.unmarshalOutputs(data)
 }
 
-func (t *Client) CallV(result interface{}, name string, args ...interface{}) *Error {
+func (t *Client) CallVM(result interface{}, m *Method, args ...interface{}) error {
+	data, err := t.callData(m, args)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, result)
+}
+
+func (t *Client) CallV(result interface{}, name string, args ...interface{}) error {
 	m := t.caller.Methods[name]
 	if m == nil {
 		return Errorf("no such method: %s", name)
 	}
-	data, err := t.callData(m, args)
-	if err == nil {
-		err = json.Unmarshal(data, result)
-	}
-	if err != nil {
-		return ToError(err)
-	}
-	return nil
+	return t.CallVM(result, m, args...)
 }
 
 func (t *Client) Call(name string, args ...interface{}) []interface{} {

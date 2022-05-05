@@ -23,3 +23,12 @@ func ToError(err error) *Error {
 	}
 	return &Error{err.Error()}
 }
+
+type ErrorCode int
+
+const (
+	ErrNone         = iota
+	ErrNoSuchMethod = iota
+	ErrMarshal      = iota
+	ErrUser         = iota
+)

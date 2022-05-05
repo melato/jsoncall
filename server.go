@@ -45,20 +45,30 @@ func (t *Server) DoService(receiver interface{}, method string, w http.ResponseW
 	inputData, err := t.getBytes(r)
 
 	var outputData []byte
-	var status int
+	status := http.StatusInternalServerError
+	var errCode ErrorCode
 	if err == nil {
-		outputData, err = t.caller.Call(method, receiver, inputData)
+		outputData, errCode, err = t.caller.Call(method, receiver, inputData)
 		if TraceData {
 			fmt.Printf("call result: %s %v\n", string(outputData), err)
 		}
-		if err == nil {
+		switch errCode {
+		case ErrNone:
 			status = http.StatusOK
+		case ErrMarshal:
+			status = http.StatusBadRequest
+		case ErrNoSuchMethod:
+			status = http.StatusNotFound
+		case ErrUser:
+			status = http.StatusInternalServerError
+		default:
+			status = http.StatusInternalServerError
 		}
 	}
 	if err != nil {
-		status = http.StatusInternalServerError
 		outputData, err = json.Marshal(ToError(err))
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(outputData)
 }
