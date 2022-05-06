@@ -29,20 +29,12 @@ func (t *GeneratedClient) Hello() (string, error) {
   return  out.P1, err
 }
 
-type rPing struct {
-}
-
 func (t *GeneratedClient) Ping() error{
-  var out rPing
-  err := t.Client.CallV(&out, "Ping")
+  err := t.Client.CallV(nil, "Ping")
   return  err
 }
 
-type rWait struct {
-}
-
 func (t *GeneratedClient) Wait(p0 int) error{
-  var out rWait
-  err := t.Client.CallV(&out, "Wait", p0)
+  err := t.Client.CallV(nil, "Wait", p0)
   return  err
 }

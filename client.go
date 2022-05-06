@@ -68,7 +68,10 @@ func (t *Client) CallVM(result interface{}, m *Method, args ...interface{}) erro
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(data, result)
+	if result != nil {
+		return json.Unmarshal(data, result)
+	}
+	return nil
 }
 
 func (t *Client) CallV(result interface{}, name string, args ...interface{}) error {

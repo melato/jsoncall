@@ -82,29 +82,61 @@ func (g *Generator) writeMethodInputs(w io.Writer, m reflect.Method) {
 	fmt.Fprintf(w, ")\n")
 }
 
-func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *jsoncall.MethodNames) {
+type Field struct {
+	Index    int
+	Name     string
+	Type     string
+	JsonName string
+}
+
+func (g *Generator) GetOutputFields(m reflect.Method, names *jsoncall.MethodNames) []Field {
+	var fields []Field
 	var errorp *error
 	errorType := reflect.TypeOf(errorp).Elem()
 	numOut := m.Type.NumOut()
-	structType := g.InternalTypePrefix + m.Name
 	if numOut > 0 {
-		fmt.Fprintf(w, "\ntype %s struct {\n", structType)
 		for j := 0; j < numOut; j++ {
 			out := m.Type.Out(j)
-			outType := out.String()
 			if out != errorType {
-				fmt.Fprintf(w, "  P%d %s `json:\"%s\"`\n", j+1, outType, names.Out[j])
+				fields = append(fields, Field{
+					Index:    j,
+					Name:     fmt.Sprintf("P%d", j+1),
+					Type:     out.String(),
+					JsonName: names.Out[j],
+				})
 			}
-			//fmt.Fprintf(w, "  P%d *jsoncall.Error\n", j+1)
+		}
+	}
+	return fields
+}
+
+func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *jsoncall.MethodNames) {
+	fields := g.GetOutputFields(m, names)
+	var errorp *error
+	errorType := reflect.TypeOf(errorp).Elem()
+	numOut := m.Type.NumOut()
+	structName := g.InternalTypePrefix + m.Name
+	if len(fields) > 0 {
+		fmt.Fprintf(w, "\ntype %s struct {\n", structName)
+		for _, f := range fields {
+			fmt.Fprintf(w, "  %s %s `json:\"%s\"`\n", f.Name, f.Type, f.JsonName)
 		}
 		fmt.Fprintf(w, "}\n")
 	}
 	g.writeMethodHeader(w, m)
-	fmt.Fprintf(w, "  var out %s\n", structType)
-	fmt.Fprintf(w, "  err := t.Client.CallV(&out, \"%s\"", m.Name)
+	if len(fields) > 0 {
+		fmt.Fprintf(w, "  var out %s\n", structName)
+		fmt.Fprintf(w, "  err := t.Client.CallV(&out, \"%s\"", m.Name)
+	} else {
+		fmt.Fprintf(w, "  err := t.Client.CallV(nil, \"%s\"", m.Name)
+	}
 	g.writeMethodInputs(w, m)
 
 	fmt.Fprintf(w, "  return ")
+	fieldNames := make(map[int]string)
+	for _, f := range fields {
+		fieldNames[f.Index] = f.Name
+	}
 	for j := 0; j < numOut; j++ {
 		if j > 0 {
 			fmt.Fprintf(w, ",")
@@ -113,7 +145,7 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *j
 		if out == errorType {
 			fmt.Fprintf(w, " err")
 		} else {
-			fmt.Fprintf(w, " out.P%d", j+1)
+			fmt.Fprintf(w, " out.%s", fieldNames[j])
 		}
 	}
 	fmt.Fprintf(w, "\n}\n")
