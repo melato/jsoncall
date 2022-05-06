@@ -18,6 +18,7 @@ type Caller struct {
 type Method struct {
 	Method       reflect.Method
 	InType       reflect.Type // a Struct type that contains the method's inputs
+	InNames      []string
 	OutNames     []string
 	OutErrors    []bool
 	LastOutError int
@@ -54,12 +55,14 @@ func newMethod(method reflect.Method) *Method {
 	m.Method = method
 	numIn := method.Type.NumIn()
 	if numIn > 1 {
+		m.InNames = make([]string, numIn-1)
 		fields := make([]reflect.StructField, numIn-1)
 		for i := 1; i < numIn; i++ {
 			var field reflect.StructField
 			field.Name = fmt.Sprintf("P%d", i)
 			field.Type = method.Type.In(i)
 			fields[i-1] = field
+			m.InNames[i-1] = field.Name
 		}
 		m.InType = reflect.StructOf(fields)
 	}
@@ -89,11 +92,14 @@ func newMethod(method reflect.Method) *Method {
 	return &m
 }
 
-func Marshal(args ...interface{}) ([]byte, error) {
+func (t *Method) MarshalInputs(args ...interface{}) ([]byte, error) {
+	if len(args) != len(t.InNames) {
+		return nil, fmt.Errorf("wrong # of arguments: %d/%d", len(args), len(t.InNames))
+	}
 	m := make(map[string]interface{})
 	for i, arg := range args {
 		if arg != nil {
-			m[fmt.Sprintf("P%d", i+1)] = arg
+			m[t.InNames[i]] = arg
 		}
 	}
 	return json.Marshal(m)
@@ -110,7 +116,6 @@ func (m *Method) unmarshalInputs(receiver interface{}, data []byte) ([]reflect.V
 		if err != nil {
 			return nil, err
 		}
-		//a = reflect.ValueOf(v).Elem()
 		a = a.Elem()
 		for i := 1; i < numIn; i++ {
 			in[i] = a.Field(i - 1)

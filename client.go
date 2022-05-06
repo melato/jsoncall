@@ -49,7 +49,7 @@ func (t *Client) responseError(response *http.Response, data []byte) error {
 }
 
 func (t *Client) callData(m *Method, args []interface{}) ([]byte, error) {
-	data, err := Marshal(args)
+	data, err := m.MarshalInputs(args)
 	if err != nil {
 		return nil, err
 	}

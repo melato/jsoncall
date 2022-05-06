@@ -79,17 +79,17 @@ func TestJsonCallDiv(t *testing.T) {
 	c := newCaller()
 	TraceData = true
 	i := &TestImpl{}
-	data, err := Marshal(3, 2)
+	m := c.Methods["Div"]
+	if m == nil {
+		t.Fatalf("method not found")
+	}
+	data, err := m.MarshalInputs(3, 2)
 	if err != nil {
 		t.Fatalf("marshal error: %v", err)
 	}
 	data, code, err := c.Call("Div", i, data)
 	if err != nil || code != ErrNone {
 		t.Fatalf("call error code: %v, err: %v", code, err)
-	}
-	m := c.Methods["Div"]
-	if m == nil {
-		t.Fatalf("method not found")
 	}
 	fmt.Printf("%v\n", string(data))
 	var out rDiv
