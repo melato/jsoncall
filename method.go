@@ -7,12 +7,11 @@ import (
 )
 
 type Method struct {
-	Name         string
-	InType       reflect.Type // a Struct type that contains the method's inputs
-	InNames      []string
-	OutNames     []string
-	OutErrors    []bool
-	LastOutError int
+	Name      string
+	InType    reflect.Type // a Struct type that contains the method's inputs
+	InNames   []string
+	OutNames  []string
+	OutErrors []bool
 }
 
 func newMethod(method reflect.Method, hasReceiver bool) *Method {
@@ -43,7 +42,6 @@ func newMethod(method reflect.Method, hasReceiver bool) *Method {
 		m.InType = reflect.StructOf(fields)
 	}
 	numOut := method.Type.NumOut()
-	m.LastOutError = -1
 	if numOut > 0 {
 		var errp *error
 		var Errp *Error
@@ -59,7 +57,6 @@ func newMethod(method reflect.Method, hasReceiver bool) *Method {
 			if field.Type == errorType {
 				field.Type = ErrorType
 				m.OutErrors[i] = true
-				m.LastOutError = i
 			}
 			fields[i] = field
 			m.OutNames[i] = field.Name
