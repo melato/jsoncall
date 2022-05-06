@@ -9,6 +9,16 @@ type GeneratedClient struct {
   Client   *jsoncall.Client
 }
 
+type rAdd struct {
+  P1 int32
+}
+
+func (t *GeneratedClient) Add(p0 int32, p1 int32) (int32, error) {
+  var out rAdd
+  err := t.Client.CallV(&out, "Add", p0, p1)
+  return  out.P1, err
+}
+
 type rHello struct {
   P1 string
 }

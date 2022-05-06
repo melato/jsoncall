@@ -7,7 +7,7 @@ import (
 )
 
 type Method struct {
-	Method       reflect.Method
+	Name         string
 	InType       reflect.Type // a Struct type that contains the method's inputs
 	InNames      []string
 	OutNames     []string
@@ -15,22 +15,30 @@ type Method struct {
 	LastOutError int
 }
 
-func newMethod(method reflect.Method) *Method {
-	if TraceInit {
-		fmt.Printf("method: %s\n", method.Name)
-	}
+func newMethod(method reflect.Method, hasReceiver bool) *Method {
 	var m Method
-	m.Method = method
+	m.Name = method.Name
 	numIn := method.Type.NumIn()
-	if numIn > 1 {
-		m.InNames = make([]string, numIn-1)
-		fields := make([]reflect.StructField, numIn-1)
-		for i := 1; i < numIn; i++ {
+	var offset int
+	if hasReceiver {
+		offset = 1
+		numIn--
+	}
+	if TraceInit {
+		fmt.Printf("method: %s in: %d\n", method.Name, numIn)
+	}
+	if numIn > 0 {
+		m.InNames = make([]string, numIn)
+		fields := make([]reflect.StructField, numIn)
+		for i := 0; i < numIn; i++ {
 			var field reflect.StructField
-			field.Name = fmt.Sprintf("P%d", i)
-			field.Type = method.Type.In(i)
-			fields[i-1] = field
-			m.InNames[i-1] = field.Name
+			field.Name = fmt.Sprintf("P%d", i+1)
+			field.Type = method.Type.In(offset + i)
+			fields[i] = field
+			m.InNames[i] = field.Name
+			if TraceInit {
+				fmt.Printf("%s field[%d]: %s (%v)\n", m.Name, i, field.Name, field.Type)
+			}
 		}
 		m.InType = reflect.StructOf(fields)
 	}
@@ -62,7 +70,7 @@ func newMethod(method reflect.Method) *Method {
 
 func (t *Method) MarshalInputs(args ...interface{}) ([]byte, error) {
 	if len(args) != len(t.InNames) {
-		return nil, fmt.Errorf("wrong # of arguments: %d/%d", len(args), len(t.InNames))
+		return nil, fmt.Errorf("wrong # of arguments for %s: %d/%d", t.Name, len(args), len(t.InNames))
 	}
 	m := make(map[string]interface{})
 	for i, arg := range args {
@@ -74,10 +82,10 @@ func (t *Method) MarshalInputs(args ...interface{}) ([]byte, error) {
 }
 
 func (m *Method) unmarshalInputs(receiver interface{}, data []byte) ([]reflect.Value, error) {
-	numIn := m.Method.Type.NumIn()
-	in := make([]reflect.Value, numIn)
+	numIn := len(m.InNames)
+	in := make([]reflect.Value, 1+numIn)
 	in[0] = reflect.ValueOf(receiver)
-	if numIn > 1 {
+	if numIn > 0 {
 		a := reflect.New(m.InType)
 		v := a.Interface()
 		err := json.Unmarshal(data, &v)
@@ -85,8 +93,8 @@ func (m *Method) unmarshalInputs(receiver interface{}, data []byte) ([]reflect.V
 			return nil, err
 		}
 		a = a.Elem()
-		for i := 1; i < numIn; i++ {
-			in[i] = a.Field(i - 1)
+		for i := 0; i < numIn; i++ {
+			in[1+i] = a.Field(i)
 		}
 	}
 	return in, nil

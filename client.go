@@ -49,11 +49,11 @@ func (t *Client) responseError(response *http.Response, data []byte) error {
 }
 
 func (t *Client) callData(m *Method, args []interface{}) ([]byte, error) {
-	data, err := m.MarshalInputs(args)
+	data, err := m.MarshalInputs(args...)
 	if err != nil {
 		return nil, err
 	}
-	request, err := http.NewRequest(http.MethodPost, t.Url+m.Method.Name, bytes.NewReader(data))
+	request, err := http.NewRequest(http.MethodPost, t.Url+m.Name, bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
