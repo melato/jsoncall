@@ -27,8 +27,7 @@ func (t *GenerateOp) Generate() error {
 	if err != nil {
 		return err
 	}
-	t.Names = c.Names
-	return t.Output(t.GenerateType(c.Api))
+	return t.Output(t.GenerateClient(c))
 
 }
 

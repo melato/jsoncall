@@ -17,7 +17,6 @@ type Generator struct {
 	Imports            []string
 	InternalTypePrefix string
 	OutputFile         string
-	Names              []*jsoncall.MethodNames `name:"-"`
 }
 
 func (t *Generator) Init() error {
@@ -45,12 +44,6 @@ func (g *Generator) Output(data []byte, err error) error {
 		fmt.Printf("%s\n", string(data))
 	}
 	return nil
-}
-
-// GenerateP - Same as GenerateType(reflect.TypeOf(v).Elem())
-func (g *Generator) GenerateP(v interface{}) ([]byte, error) {
-	t := reflect.TypeOf(v).Elem()
-	return g.GenerateType(t)
 }
 
 func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
@@ -127,10 +120,8 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *j
 }
 
 // GenerateType - Generate a type that implements the methods of type <t>
-func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
-	if t.Kind() != reflect.Interface {
-		return nil, fmt.Errorf("please use an interface type")
-	}
+func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
+	t := c.Type
 	w := &bytes.Buffer{}
 	fmt.Fprintf(w, "package %s\n\n", g.Package)
 	fmt.Fprintf(w, "import (\n")
@@ -144,7 +135,7 @@ func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
 	fmt.Fprintf(w, "  Client   *jsoncall.Client\n")
 	fmt.Fprintf(w, "}\n")
 	namesMap := make(map[string]*jsoncall.MethodNames)
-	for _, m := range g.Names {
+	for _, m := range c.Names {
 		namesMap[m.Method] = m
 	}
 	n := t.NumMethod()

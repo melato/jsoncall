@@ -10,7 +10,7 @@ var TraceInit bool
 var TraceDebug bool
 
 type Caller struct {
-	Api     reflect.Type
+	Type     reflect.Type
 	Methods map[string]*Method
 	Names   []*MethodNames
 }
@@ -47,7 +47,7 @@ func (c *Caller) SetType(api reflect.Type) error {
 	default:
 		return fmt.Errorf("unsupported api (%v) kind: %v", api, api.Kind())
 	}
-	c.Api = api
+	c.Type = api
 	n := api.NumMethod()
 	if TraceInit {
 		fmt.Printf("api type: %v methods: %d\n", api, n)

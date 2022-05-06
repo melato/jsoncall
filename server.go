@@ -82,7 +82,7 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if found {
 		t.ServeMethod(m, w, r)
 	} else {
-		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.Api, path))
+		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.Type, path))
 	}
 }
 
