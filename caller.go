@@ -64,34 +64,3 @@ func (c *Caller) SetType(api reflect.Type) error {
 	}
 	return nil
 }
-
-// Call - call a receiver method.
-// Unmarshal the method parameters from JSON and marshal the outputs to JSON
-// arguments and return values are marshalled as a map, with keys "P1", "P2", ...
-// If the last output is of type error, it is unmashalled as *Error
-// If there is an error in unmarshalling/marshalling, return nil, *Error
-func (t *Caller) Call(m *Method, receiver interface{}, jsonIn []byte) ([]byte, ErrorCode, error) {
-	rType := reflect.TypeOf(receiver)
-	name := m.Names.Method
-	if TraceCalls {
-		fmt.Printf("%v.%s(%s)\n", rType, name, string(jsonIn))
-	}
-	method, exists := rType.MethodByName(name)
-	if !exists {
-		return nil, ErrNoSuchMethod, Errorf("unknown receiver method: %v.%s", rType, name)
-	}
-
-	in, err := m.unmarshalInputs(receiver, jsonIn)
-	if err != nil {
-		return nil, ErrMarshal, &Error{err.Error()}
-	}
-	out := method.Func.Call(in)
-	outputData, err := m.marshalOutputs(out)
-	if err != nil {
-		return nil, ErrMarshal, err
-	}
-	if TraceCalls {
-		fmt.Printf("result: %s\n", string(outputData))
-	}
-	return outputData, ErrNone, nil
-}

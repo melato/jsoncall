@@ -48,7 +48,7 @@ func (t *Server) DoService(receiver interface{}, m *Method, w http.ResponseWrite
 	status := http.StatusInternalServerError
 	var errCode ErrorCode
 	if err == nil {
-		outputData, errCode, err = t.Caller.Call(m, receiver, inputData)
+		outputData, errCode, err = m.Call(receiver, inputData)
 		if TraceData {
 			fmt.Printf("call result: %s %v\n", string(outputData), err)
 		}
