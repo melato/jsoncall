@@ -7,8 +7,10 @@ import (
 )
 
 type Method struct {
-	Name      string
-	InType    reflect.Type // a Struct type that contains the method's inputs
+	Name string
+	// InType is a Struct type that containers one field for each method input
+	// It is used by the server to unmarshal the input arguments
+	InType    reflect.Type
 	InNames   []string
 	OutNames  []string
 	OutErrors []bool
