@@ -12,60 +12,69 @@ var TraceDebug bool
 type Caller struct {
 	Api     reflect.Type
 	Methods map[string]*Method
+	Names   []*MethodNames
 }
 
-func NewJsonCallerP(proto interface{}) (*Caller, error) {
+func HasReceiver(api reflect.Type) bool {
+	if api.Kind() == reflect.Interface {
+		return false
+	}
+	return true
+}
+
+func (c *Caller) SetTypePointer(proto interface{}) error {
 	pType := reflect.TypeOf(proto)
-	if pType.Kind() == reflect.Pointer {
+	switch pType.Kind() {
+	case reflect.Interface:
+		return fmt.Errorf("cannot use interface{} prototype.  must be pointer or slice")
+	case reflect.Pointer:
 		eType := pType.Elem()
 		if eType.Kind() == reflect.Interface {
-			return NewJsonCaller(eType)
+			return c.SetType(eType)
 		}
 	}
-	return NewJsonCaller(pType)
+	return c.SetType(pType)
 }
 
-func NewJsonCaller(api reflect.Type) (*Caller, error) {
-	var c Caller
+func (c *Caller) SetType(api reflect.Type) error {
 	if api == nil {
-		return nil, fmt.Errorf("nil api type")
+		return fmt.Errorf("nil api type")
 	}
-	var hasReceiver bool
+	hasReceiver := HasReceiver(api)
 	switch api.Kind() {
 	case reflect.Pointer:
-		hasReceiver = true
 	case reflect.Interface:
-		hasReceiver = false
 	default:
-		return nil, fmt.Errorf("unsupported api (%v) kind: %v", api, api.Kind())
+		return fmt.Errorf("unsupported api (%v) kind: %v", api, api.Kind())
 	}
 	c.Api = api
 	n := api.NumMethod()
 	if TraceInit {
 		fmt.Printf("api type: %v methods: %d\n", api, n)
 	}
+	namesMap := make(map[string]*MethodNames)
+	for _, m := range c.Names {
+		namesMap[m.Method] = m
+	}
 	c.Methods = make(map[string]*Method, n)
 	for i := 0; i < n; i++ {
 		method := api.Method(i)
-		m := newMethod(method, hasReceiver)
+		m := newMethod(method, hasReceiver, namesMap[method.Name])
 		c.Methods[method.Name] = m
 	}
-	return &c, nil
+	return nil
 }
 
-// Call - call the receiver method with the given name.
+// Call - call a receiver method.
 // Unmarshal the method parameters from JSON and marshal the outputs to JSON
 // arguments and return values are marshalled as a map, with keys "P1", "P2", ...
 // If the last output is of type error, it is unmashalled as *Error
 // If there is an error in unmarshalling/marshalling, return nil, *Error
-func (t *Caller) Call(name string, receiver interface{}, jsonIn []byte) ([]byte, ErrorCode, error) {
+func (t *Caller) Call(m *Method, receiver interface{}, jsonIn []byte) ([]byte, ErrorCode, error) {
 	rType := reflect.TypeOf(receiver)
+	name := m.Names.Method
 	if TraceCalls {
 		fmt.Printf("%v.%s(%s)\n", rType, name, string(jsonIn))
-	}
-	m := t.Methods[name]
-	if m == nil {
-		return nil, ErrNoSuchMethod, Errorf("unknown api method: %v.%s", t.Api, name)
 	}
 	method, exists := rType.MethodByName(name)
 	if !exists {

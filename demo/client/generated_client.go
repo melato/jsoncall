@@ -10,7 +10,7 @@ type GeneratedClient struct {
 }
 
 type rAdd struct {
-  P1 int32
+  P1 int32 `json:"sum"`
 }
 
 func (t *GeneratedClient) Add(p0 int32, p1 int32) (int32, error) {
@@ -20,7 +20,7 @@ func (t *GeneratedClient) Add(p0 int32, p1 int32) (int32, error) {
 }
 
 type rHello struct {
-  P1 string
+  P1 string `json:"s"`
 }
 
 func (t *GeneratedClient) Hello() (string, error) {

@@ -16,18 +16,8 @@ type Server struct {
 	// ReceiverFunc - provides a method receiver for each call
 	// If it returns nil, processing of the request stops.
 	ReceiverFunc func(w http.ResponseWriter, r *http.Request) (interface{}, error)
-	caller       *Caller
-}
-
-func NewServer(api interface{}) (*Server, error) {
-	var s Server
-	var err error
-	s.caller, err = NewJsonCallerP(api)
-	if err != nil {
-		return nil, err
-	}
-	s.ReceiverFunc = func(w http.ResponseWriter, r *http.Request) (interface{}, error) { return api, nil }
-	return &s, nil
+	Caller       *Caller
+	methodPaths  map[string]*Method
 }
 
 func (t *Server) getBytes(r *http.Request) ([]byte, error) {
@@ -40,14 +30,25 @@ func (t *Server) getBytes(r *http.Request) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (t *Server) DoService(receiver interface{}, method string, w http.ResponseWriter, r *http.Request) {
+func (t *Server) writeResponse(w http.ResponseWriter, status int, data []byte) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write(data)
+}
+
+func (t *Server) writeError(w http.ResponseWriter, status int, e error) {
+	data, _ := json.Marshal(ToError(e))
+	t.writeResponse(w, status, data)
+}
+
+func (t *Server) DoService(receiver interface{}, m *Method, w http.ResponseWriter, r *http.Request) {
 	inputData, err := t.getBytes(r)
 
 	var outputData []byte
 	status := http.StatusInternalServerError
 	var errCode ErrorCode
 	if err == nil {
-		outputData, errCode, err = t.caller.Call(method, receiver, inputData)
+		outputData, errCode, err = t.Caller.Call(m, receiver, inputData)
 		if TraceData {
 			fmt.Printf("call result: %s %v\n", string(outputData), err)
 		}
@@ -65,26 +66,30 @@ func (t *Server) DoService(receiver interface{}, method string, w http.ResponseW
 		}
 	}
 	if err != nil {
-		outputData, err = json.Marshal(ToError(err))
+		t.writeError(w, status, err)
+	} else {
+		t.writeResponse(w, status, outputData)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(outputData)
 }
 
 func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	path = strings.TrimPrefix(path, "/")
+	m, found := t.methodPaths[path]
 	if TraceCalls {
-		fmt.Printf("method: %s\n", path)
+		fmt.Printf("path: %s method: %s\n", path, m.Names.Method)
 	}
-	t.ServeMethod(path, w, r)
+	if found {
+		t.ServeMethod(m, w, r)
+	} else {
+		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.Api, path))
+	}
 }
 
-func (t *Server) ServeMethod(method string, w http.ResponseWriter, r *http.Request) {
+func (t *Server) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
 	receiver, err := t.ReceiverFunc(w, r)
 	if err == nil {
-		t.DoService(receiver, method, w, r)
+		t.DoService(receiver, m, w, r)
 	} else {
 		outputData, err2 := json.Marshal(ToError(err))
 		if err2 == nil {
@@ -95,6 +100,10 @@ func (t *Server) ServeMethod(method string, w http.ResponseWriter, r *http.Reque
 }
 
 func (t *Server) Run() error {
+	t.methodPaths = make(map[string]*Method)
+	for _, m := range t.Caller.Methods {
+		t.methodPaths[m.Names.Path] = m
+	}
 	server := &http.Server{Addr: fmt.Sprintf(":%d", t.Port), Handler: t}
 	log.Printf("starting server at %s\n", server.Addr)
 	err := server.ListenAndServe()

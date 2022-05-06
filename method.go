@@ -7,18 +7,19 @@ import (
 )
 
 type Method struct {
-	Name string
+	Names *MethodNames
 	// InType is a Struct type that containers one field for each method input
 	// It is used by the server to unmarshal the input arguments
 	InType    reflect.Type
-	InNames   []string
-	OutNames  []string
 	OutErrors []bool
 }
 
-func newMethod(method reflect.Method, hasReceiver bool) *Method {
+func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) *Method {
 	var m Method
-	m.Name = method.Name
+	if names == nil {
+		names = DefaultMethodNames(method, hasReceiver)
+	}
+	m.Names = names
 	numIn := method.Type.NumIn()
 	var offset int
 	if hasReceiver {
@@ -29,16 +30,15 @@ func newMethod(method reflect.Method, hasReceiver bool) *Method {
 		fmt.Printf("method: %s in: %d\n", method.Name, numIn)
 	}
 	if numIn > 0 {
-		m.InNames = make([]string, numIn)
 		fields := make([]reflect.StructField, numIn)
 		for i := 0; i < numIn; i++ {
 			var field reflect.StructField
 			field.Name = fmt.Sprintf("P%d", i+1)
+			field.Tag = reflect.StructTag(fmt.Sprintf(`json:"%s"`, names.In[i]))
 			field.Type = method.Type.In(offset + i)
 			fields[i] = field
-			m.InNames[i] = field.Name
 			if TraceInit {
-				fmt.Printf("%s field[%d]: %s (%v)\n", m.Name, i, field.Name, field.Type)
+				fmt.Printf("%s field[%d]: %s (%v)\n", method.Name, i, field.Name, field.Type)
 			}
 		}
 		m.InType = reflect.StructOf(fields)
@@ -50,38 +50,27 @@ func newMethod(method reflect.Method, hasReceiver bool) *Method {
 		errorType := reflect.TypeOf(errp).Elem()
 		ErrorType := reflect.TypeOf(Errp)
 		fields := make([]reflect.StructField, numOut)
-		m.OutNames = make([]string, numOut)
 		m.OutErrors = make([]bool, numOut)
 		for i := 0; i < numOut; i++ {
 			var field reflect.StructField
-			field.Name = fmt.Sprintf("P%d", i+1)
+			field.Name = m.Names.Out[i]
 			field.Type = method.Type.Out(i)
 			if field.Type == errorType {
 				field.Type = ErrorType
 				m.OutErrors[i] = true
 			}
 			fields[i] = field
-			m.OutNames[i] = field.Name
 		}
 	}
 	return &m
 }
 
 func (t *Method) MarshalInputs(args ...interface{}) ([]byte, error) {
-	if len(args) != len(t.InNames) {
-		return nil, fmt.Errorf("wrong # of arguments for %s: %d/%d", t.Name, len(args), len(t.InNames))
-	}
-	m := make(map[string]interface{})
-	for i, arg := range args {
-		if arg != nil {
-			m[t.InNames[i]] = arg
-		}
-	}
-	return json.Marshal(m)
+	return t.Names.MarshalInputs(args...)
 }
 
 func (m *Method) unmarshalInputs(receiver interface{}, data []byte) ([]reflect.Value, error) {
-	numIn := len(m.InNames)
+	numIn := len(m.Names.In)
 	in := make([]reflect.Value, 1+numIn)
 	in[0] = reflect.ValueOf(receiver)
 	if numIn > 0 {
@@ -116,7 +105,7 @@ func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, error) {
 			e := v.(error)
 			v = ToError(e)
 		}
-		outMap[m.OutNames[i]] = v
+		outMap[m.Names.Out[i]] = v
 	}
 
 	return json.Marshal(outMap)

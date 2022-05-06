@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 )
 
 var TraceAuth bool
@@ -15,27 +14,7 @@ var TraceData bool
 type Client struct {
 	Url         string
 	InitRequest func(r *http.Request) error
-	caller      *Caller
-}
-
-func NewClient(api reflect.Type) (*Client, error) {
-	var c Client
-	var err error
-	c.caller, err = NewJsonCaller(api)
-	if err != nil {
-		return nil, err
-	}
-	return &c, nil
-}
-
-func NewClientP(api interface{}) (*Client, error) {
-	apiType := reflect.TypeOf(api)
-	switch apiType.Kind() {
-	case reflect.Pointer, reflect.Slice:
-		return NewClient(apiType.Elem())
-	default:
-		return nil, fmt.Errorf("provided interface{} must be pointer or slice")
-	}
+	Caller      *Caller
 }
 
 func (t *Client) responseError(response *http.Response, data []byte) error {
@@ -53,7 +32,7 @@ func (t *Client) callData(m *Method, args []interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	request, err := http.NewRequest(http.MethodPost, t.Url+m.Name, bytes.NewReader(data))
+	request, err := http.NewRequest(http.MethodPost, t.Url+m.Names.Path, bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +72,7 @@ func (t *Client) CallVM(result interface{}, m *Method, args ...interface{}) erro
 }
 
 func (t *Client) CallV(result interface{}, name string, args ...interface{}) error {
-	m := t.caller.Methods[name]
+	m := t.Caller.Methods[name]
 	if m == nil {
 		return Errorf("no such method: %s", name)
 	}

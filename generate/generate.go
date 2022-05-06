@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"reflect"
+
+	"melato.org/jsoncall"
 )
 
 // Generator - generates client Go code for a web service that uses the jsoncall conventions
@@ -15,6 +17,7 @@ type Generator struct {
 	Imports            []string
 	InternalTypePrefix string
 	OutputFile         string
+	Names              []*jsoncall.MethodNames `name:"-"`
 }
 
 func (t *Generator) Init() error {
@@ -86,7 +89,7 @@ func (g *Generator) writeMethodInputs(w io.Writer, m reflect.Method) {
 	fmt.Fprintf(w, ")\n")
 }
 
-func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method) {
+func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *jsoncall.MethodNames) {
 	var errorp *error
 	errorType := reflect.TypeOf(errorp).Elem()
 	numOut := m.Type.NumOut()
@@ -97,7 +100,7 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method) {
 			out := m.Type.Out(j)
 			outType := out.String()
 			if out != errorType {
-				fmt.Fprintf(w, "  P%d %s\n", j+1, outType)
+				fmt.Fprintf(w, "  P%d %s `json:\"%s\"`\n", j+1, outType, names.Out[j])
 			}
 			//fmt.Fprintf(w, "  P%d *jsoncall.Error\n", j+1)
 		}
@@ -125,6 +128,9 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method) {
 
 // GenerateType - Generate a type that implements the methods of type <t>
 func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
+	if t.Kind() != reflect.Interface {
+		return nil, fmt.Errorf("please use an interface type")
+	}
 	w := &bytes.Buffer{}
 	fmt.Fprintf(w, "package %s\n\n", g.Package)
 	fmt.Fprintf(w, "import (\n")
@@ -137,13 +143,21 @@ func (g *Generator) GenerateType(t reflect.Type) ([]byte, error) {
 	fmt.Fprintf(w, "type %s struct {\n", g.Type)
 	fmt.Fprintf(w, "  Client   *jsoncall.Client\n")
 	fmt.Fprintf(w, "}\n")
+	namesMap := make(map[string]*jsoncall.MethodNames)
+	for _, m := range g.Names {
+		namesMap[m.Method] = m
+	}
 	n := t.NumMethod()
 	for i := 0; i < n; i++ {
 		m := t.Method(i)
 		if !m.IsExported() {
 			continue
 		}
-		g.generateMethodStruct(w, m)
+		names := namesMap[m.Name]
+		if names == nil {
+			names = jsoncall.DefaultMethodNames(m, false)
+		}
+		g.generateMethodStruct(w, m, names)
 	}
 	return w.Bytes(), nil
 }
