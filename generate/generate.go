@@ -147,35 +147,38 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *j
 			hasError = true
 		}
 	}
-	errAssign := "err := "
-	if !hasError {
-		errAssign = "_ ="
+	var errAssign string
+	if hasError {
+		errAssign = "err := "
 	}
 	if len(fields) > 0 {
 		fmt.Fprintf(w, "  var out %s\n", structName)
-		fmt.Fprintf(w, "  %s t.Client.CallV(&out, \"%s\"", errAssign, m.Name)
+		fmt.Fprintf(w, "  %st.Client.CallV(&out, \"%s\"", errAssign, m.Name)
 	} else {
-		fmt.Fprintf(w, "  %s t.Client.CallV(nil, \"%s\"", errAssign, m.Name)
+		fmt.Fprintf(w, "  %st.Client.CallV(nil, \"%s\"", errAssign, m.Name)
 	}
 	g.writeMethodInputs(w, m)
 
-	fmt.Fprintf(w, "  return ")
-	fieldNames := make(map[int]string)
-	for _, f := range fields {
-		fieldNames[f.Index] = f.Name
-	}
-	for j := 0; j < numOut; j++ {
-		if j > 0 {
-			fmt.Fprintf(w, ",")
+	if numOut > 0 {
+		fmt.Fprintf(w, "  return ")
+		fieldNames := make(map[int]string)
+		for _, f := range fields {
+			fieldNames[f.Index] = f.Name
 		}
-		out := m.Type.Out(j)
-		if out == errorType {
-			fmt.Fprintf(w, " err")
-		} else {
-			fmt.Fprintf(w, " out.%s", fieldNames[j])
+		for j := 0; j < numOut; j++ {
+			if j > 0 {
+				fmt.Fprintf(w, ",")
+			}
+			out := m.Type.Out(j)
+			if out == errorType {
+				fmt.Fprintf(w, " err")
+			} else {
+				fmt.Fprintf(w, " out.%s", fieldNames[j])
+			}
 		}
+		fmt.Fprintf(w, "\n")
 	}
-	fmt.Fprintf(w, "\n}\n")
+	fmt.Fprintf(w, "}\n")
 }
 
 // GenerateType - Generate a type that implements the methods of type <t>
