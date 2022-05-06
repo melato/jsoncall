@@ -12,8 +12,7 @@ import (
 
 // Server - provides a web service that maps requests to method calls on a receiver
 type Server struct {
-	Port  int32
-	Trace bool
+	Port int32
 	// ReceiverFunc - provides a method receiver for each call
 	// If it returns nil, processing of the request stops.
 	ReceiverFunc func(w http.ResponseWriter, r *http.Request) (interface{}, error)
