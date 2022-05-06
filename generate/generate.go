@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"regexp"
 
 	"melato.org/jsoncall"
 )
@@ -46,6 +47,21 @@ func (g *Generator) Output(data []byte, err error) error {
 	return nil
 }
 
+var pathRegexp = regexp.MustCompile(`(.*?)([a-z_A-Z]+)\.([^\.]+)`)
+
+func TypeName(rtype reflect.Type, pkg string) string {
+	s := rtype.String()
+	parts := pathRegexp.FindStringSubmatch(s)
+	if len(parts) > 0 && parts[2] == pkg {
+		return parts[1] + parts[3]
+	}
+	return s
+}
+
+func (g *Generator) typeName(rtype reflect.Type) string {
+	return TypeName(rtype, g.Package)
+}
+
 func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
 	fmt.Fprintf(w, "\nfunc (t *%s) %s(", g.Type, m.Name)
 	numIn := m.Type.NumIn()
@@ -54,7 +70,7 @@ func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
 		if j > 0 {
 			fmt.Fprintf(w, ", ")
 		}
-		fmt.Fprintf(w, "p%d %s", j, in.String())
+		fmt.Fprintf(w, "p%d %s", j, g.typeName(in))
 	}
 	fmt.Fprintf(w, ") ")
 	numOut := m.Type.NumOut()
@@ -66,7 +82,7 @@ func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
 		if j > 0 {
 			fmt.Fprintf(w, ", ")
 		}
-		fmt.Fprintf(w, "%s", out.String())
+		fmt.Fprintf(w, "%s", g.typeName(out))
 	}
 	if numOut > 1 {
 		fmt.Fprintf(w, ") ")
@@ -101,7 +117,7 @@ func (g *Generator) GetOutputFields(m reflect.Method, names *jsoncall.MethodName
 				fields = append(fields, Field{
 					Index:    j,
 					Name:     fmt.Sprintf("P%d", j+1),
-					Type:     out.String(),
+					Type:     g.typeName(out),
 					JsonName: names.Out[j],
 				})
 			}
@@ -124,11 +140,22 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *j
 		fmt.Fprintf(w, "}\n")
 	}
 	g.writeMethodHeader(w, m)
+	var hasError bool
+	for j := 0; j < numOut; j++ {
+		out := m.Type.Out(j)
+		if out == errorType {
+			hasError = true
+		}
+	}
+	errAssign := "err := "
+	if !hasError {
+		errAssign = "_ ="
+	}
 	if len(fields) > 0 {
 		fmt.Fprintf(w, "  var out %s\n", structName)
-		fmt.Fprintf(w, "  err := t.Client.CallV(&out, \"%s\"", m.Name)
+		fmt.Fprintf(w, "  %s t.Client.CallV(&out, \"%s\"", errAssign, m.Name)
 	} else {
-		fmt.Fprintf(w, "  err := t.Client.CallV(nil, \"%s\"", m.Name)
+		fmt.Fprintf(w, "  %s t.Client.CallV(nil, \"%s\"", errAssign, m.Name)
 	}
 	g.writeMethodInputs(w, m)
 
