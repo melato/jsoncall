@@ -18,7 +18,6 @@ type Caller struct {
 type Method struct {
 	Method       reflect.Method
 	InType       reflect.Type // a Struct type that contains the method's inputs
-	OutType      reflect.Type // a Struct type that contains the method's outputs
 	OutNames     []string
 	OutErrors    []bool
 	LastOutError int
@@ -86,7 +85,6 @@ func newMethod(method reflect.Method) *Method {
 			fields[i] = field
 			m.OutNames[i] = field.Name
 		}
-		m.OutType = reflect.StructOf(fields)
 	}
 	return &m
 }
