@@ -30,15 +30,25 @@ func (t *GenerateOp) Generate() error {
 
 }
 
-func (t *GenerateOp) WriteNames(file string) error {
+type NamesOp struct {
+	File string `name:"f" usage:"names JSON file"`
+}
+
+func (t *NamesOp) Init() error {
+	t.File = "../demo.json"
+	return nil
+}
+
+func (t *NamesOp) UpdateNames() error {
 	var api *demo.Demo
-	return generate.UpdateMethodNames(api, file)
+	return generate.UpdateMethodNames(api, t.File)
 }
 
 func main() {
 	var cmd command.SimpleCommand
 	var generateOp GenerateOp
 	cmd.Command("client").Flags(&generateOp).RunFunc(generateOp.Generate)
-	cmd.Command("names").RunFunc(generateOp.WriteNames)
+	var namesOp NamesOp
+	cmd.Command("names").Flags(&namesOp).RunFunc(namesOp.UpdateNames)
 	command.Main(&cmd)
 }

@@ -14,20 +14,27 @@ type Method struct {
 	OutErrors []bool
 }
 
-func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) *Method {
+func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) (*Method, error) {
 	var m Method
 	if names == nil {
 		names = DefaultMethodNames(method, hasReceiver)
 	}
-	m.Names = names
 	numIn := method.Type.NumIn()
+	numOut := method.Type.NumOut()
 	var offset int
 	if hasReceiver {
 		offset = 1
 		numIn--
 	}
+	if numIn != len(names.In) {
+		return nil, fmt.Errorf("method %s has %d inputs, but its names definition has %d", method.Name, numIn, len(names.In))
+	}
+	if numOut != len(names.Out) {
+		return nil, fmt.Errorf("method %s has %d outputs, but its names definition has %d", method.Name, numOut, len(names.Out))
+	}
+	m.Names = names
 	if TraceInit {
-		fmt.Printf("method: %s in: %d\n", method.Name, numIn)
+		fmt.Printf("method: %s in: %d out: %d\n", method.Name, numIn, numOut)
 	}
 	if numIn > 0 {
 		fields := make([]reflect.StructField, numIn)
@@ -43,7 +50,6 @@ func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) *Met
 		}
 		m.InType = reflect.StructOf(fields)
 	}
-	numOut := method.Type.NumOut()
 	if numOut > 0 {
 		var errp *error
 		var Errp *Error
@@ -62,7 +68,7 @@ func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) *Met
 			fields[i] = field
 		}
 	}
-	return &m
+	return &m, nil
 }
 
 func (t *Method) MarshalInputs(args ...interface{}) ([]byte, error) {

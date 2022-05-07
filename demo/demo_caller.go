@@ -11,13 +11,12 @@ import (
 var demoNames []byte
 
 func NewCaller() (*jsoncall.Caller, error) {
-	// api can be a pointer to an interface type or a struct type.
-	var api *Demo
 	var c jsoncall.Caller
 	err := json.Unmarshal(demoNames, &c.Names)
 	if err != nil {
 		return nil, err
 	}
+	var api *Demo
 	err = c.SetTypePointer(api)
 	if err != nil {
 		return nil, err

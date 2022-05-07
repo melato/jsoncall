@@ -9,10 +9,15 @@ var TraceCalls bool
 var TraceInit bool
 var TraceDebug bool
 
+// Caller specifies a set of methods and how to call them.
 type Caller struct {
 	Type    reflect.Type
 	Methods map[string]*Method
-	Names   []*MethodNames
+
+	// Names determines what methods are used across the wire for each method
+	// If any method's names are missing, default names are used
+	// If you set this, you must do this before calling SetType or SetTypePointer
+	Names Names
 }
 
 // HasReceiver determines whether the methods of a given Type include a receiver first argument
@@ -24,6 +29,17 @@ func HasReceiver(rtype reflect.Type) bool {
 	return true
 }
 
+// SetTypePointer is similar to SetType, but infers the type from a provided prototype pointer,
+// which can be a pointer to an interface type or a struct type.
+//
+// Examples:
+// 	SetTypePointer((*Demo)(nil))
+// or:
+// 	var v *Demo
+// 	SetTypePointer(v)
+// instead of:
+// 	var v *Demo
+// 	SetType(reflect.TypeOf(v))
 func (c *Caller) SetTypePointer(proto interface{}) error {
 	pType := reflect.TypeOf(proto)
 	switch pType.Kind() {
@@ -38,6 +54,7 @@ func (c *Caller) SetTypePointer(proto interface{}) error {
 	return c.SetType(pType)
 }
 
+// SetType specifies the Type whose methods are to be used by the Caller
 func (c *Caller) SetType(api reflect.Type) error {
 	if api == nil {
 		return fmt.Errorf("nil api type")
@@ -61,7 +78,10 @@ func (c *Caller) SetType(api reflect.Type) error {
 	c.Methods = make(map[string]*Method, n)
 	for i := 0; i < n; i++ {
 		method := api.Method(i)
-		m := newMethod(method, hasReceiver, namesMap[method.Name])
+		m, err := newMethod(method, hasReceiver, namesMap[method.Name])
+		if err != nil {
+			return err
+		}
 		c.Methods[method.Name] = m
 	}
 	return nil
