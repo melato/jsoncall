@@ -6,6 +6,8 @@ import (
 	"melato.org/jsoncall/generate"
 )
 
+// Program that generates the client stub.  Needed only at development time.
+// Usage: go run generate.go client
 type GenerateOp struct {
 	generate.Generator
 }

@@ -11,6 +11,7 @@ import (
 var demoNames []byte
 
 func NewCaller() (*jsoncall.Caller, error) {
+	// api can be a pointer to an interface type or a struct type.
 	var api *Demo
 	var c jsoncall.Caller
 	err := json.Unmarshal(demoNames, &c.Names)

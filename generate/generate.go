@@ -18,6 +18,7 @@ type Generator struct {
 	Imports            []string
 	InternalTypePrefix string
 	OutputFile         string
+	inOffset           int
 }
 
 func (t *Generator) Init() error {
@@ -66,12 +67,12 @@ func (g *Generator) typeName(rtype reflect.Type) string {
 func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
 	fmt.Fprintf(w, "\nfunc (t *%s) %s(", g.Type, m.Name)
 	numIn := m.Type.NumIn()
-	for j := 0; j < numIn; j++ {
+	for j := g.inOffset; j < numIn; j++ {
 		in := m.Type.In(j)
-		if j > 0 {
+		if j > g.inOffset {
 			fmt.Fprintf(w, ", ")
 		}
-		fmt.Fprintf(w, "p%d %s", j, g.typeName(in))
+		fmt.Fprintf(w, "p%d %s", j-g.inOffset, g.typeName(in))
 	}
 	fmt.Fprintf(w, ") ")
 	numOut := m.Type.NumOut()
@@ -93,8 +94,8 @@ func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
 
 func (g *Generator) writeMethodInputs(w io.Writer, m reflect.Method) {
 	numIn := m.Type.NumIn()
-	for j := 0; j < numIn; j++ {
-		fmt.Fprintf(w, ", p%d", j)
+	for j := g.inOffset; j < numIn; j++ {
+		fmt.Fprintf(w, ", p%d", j-g.inOffset)
 	}
 	fmt.Fprintf(w, ")\n")
 }
@@ -185,6 +186,9 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *j
 // GenerateType - Generate a type that implements the methods of type <t>
 func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
 	t := c.Type
+	if jsoncall.HasReceiver(t) {
+		g.inOffset = 1
+	}
 	w := &bytes.Buffer{}
 	fmt.Fprintf(w, "package %s\n\n", g.Package)
 	fmt.Fprintf(w, "import (\n")
