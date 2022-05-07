@@ -40,6 +40,7 @@ func (g *Generator) Output(data []byte, err error) error {
 		return err
 	}
 	if g.OutputFile != "" {
+		fmt.Printf("generating %s\n", g.OutputFile)
 		return os.WriteFile(g.OutputFile, data, os.FileMode(0644))
 	} else {
 		fmt.Printf("%s\n", string(data))
