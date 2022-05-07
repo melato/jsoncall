@@ -107,3 +107,18 @@ func (c *Caller) SetType(api reflect.Type) error {
 	}
 	return nil
 }
+
+// NewCaller creates a new caller for the prototype methods
+// jsonNames is an optional JSON representation of Names
+func NewCaller(proto interface{}, jsonNames []byte) (*Caller, error) {
+	var c Caller
+	err := c.SetNamesJson(jsonNames)
+	if err != nil {
+		return nil, err
+	}
+	err = c.SetTypePointer(proto)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
