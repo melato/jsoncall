@@ -12,6 +12,18 @@
   ]
  },
  {
+  "method": "Div",
+  "path": "Div",
+  "in": [
+   "P1",
+   "P2"
+  ],
+  "out": [
+   "P1",
+   "P2"
+  ]
+ },
+ {
   "method": "Hello",
   "path": "hello",
   "in": null,

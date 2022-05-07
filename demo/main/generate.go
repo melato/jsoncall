@@ -32,8 +32,7 @@ func (t *GenerateOp) Generate() error {
 
 func (t *GenerateOp) WriteNames(file string) error {
 	var api *demo.Demo
-	names := generate.GenerateMethodNames(api)
-	return generate.WriteMethodNamesJSON(names, file)
+	return generate.UpdateMethodNames(api, file)
 }
 
 func main() {
