@@ -72,7 +72,7 @@ func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
 		if j > g.inOffset {
 			fmt.Fprintf(w, ", ")
 		}
-		fmt.Fprintf(w, "p%d %s", j-g.inOffset, g.typeName(in))
+		fmt.Fprintf(w, "p%d %s", 1+j-g.inOffset, g.typeName(in))
 	}
 	fmt.Fprintf(w, ") ")
 	numOut := m.Type.NumOut()
@@ -95,7 +95,7 @@ func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
 func (g *Generator) writeMethodInputs(w io.Writer, m reflect.Method) {
 	numIn := m.Type.NumIn()
 	for j := g.inOffset; j < numIn; j++ {
-		fmt.Fprintf(w, ", p%d", j-g.inOffset)
+		fmt.Fprintf(w, ", p%d", 1+j-g.inOffset)
 	}
 	fmt.Fprintf(w, ")\n")
 }
