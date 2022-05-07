@@ -82,7 +82,7 @@ func (t *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if found {
 		t.ServeMethod(m, w, r)
 	} else {
-		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.Type, path))
+		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.rType, path))
 	}
 }
 
@@ -101,7 +101,7 @@ func (t *HttpServer) ServeMethod(m *Method, w http.ResponseWriter, r *http.Reque
 
 func (t *HttpServer) Run() error {
 	t.methodPaths = make(map[string]*Method)
-	for _, m := range t.Caller.Methods {
+	for _, m := range t.Caller.methods {
 		t.methodPaths[m.Names.Path] = m
 	}
 	server := &http.Server{Addr: fmt.Sprintf(":%d", t.Port), Handler: t}

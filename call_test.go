@@ -79,7 +79,7 @@ func TestJsonCallDiv(t *testing.T) {
 	c := newCaller()
 	TraceData = true
 	i := &TestImpl{}
-	m := c.Methods["Div"]
+	m := c.methods["Div"]
 	if m == nil {
 		t.Fatalf("method not found")
 	}

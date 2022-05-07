@@ -84,7 +84,7 @@ func (t *HttpClient) callMethod(result interface{}, m *Method, args ...interface
 }
 
 func (t *HttpClient) Call(result interface{}, name string, args ...interface{}) error {
-	m := t.Caller.Methods[name]
+	m := t.Caller.methods[name]
 	if m == nil {
 		return Errorf("no such method: %s", name)
 	}

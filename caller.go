@@ -11,13 +11,17 @@ var TraceDebug bool
 
 // Caller specifies a set of methods and how to call them.
 type Caller struct {
-	Type    reflect.Type
-	Methods map[string]*Method
-
-	// Names determines what methods are used across the wire for each method
-	// If any method's names are missing, default names are used
-	// If you set this, you must do this before calling SetType or SetTypePointer
+	// Names determines what methods are used for marshalling/unmarshalling each method call.
+	// If any method's names are missing, default names are used.
+	// If you set this, you must do set it before calling SetType or SetTypePointer
 	Names Names
+
+	rType   reflect.Type
+	methods map[string]*Method
+}
+
+func (c *Caller) Type() reflect.Type {
+	return c.rType
 }
 
 // HasReceiver determines whether the methods of a given Type include a receiver first argument
@@ -66,7 +70,7 @@ func (c *Caller) SetType(api reflect.Type) error {
 	default:
 		return fmt.Errorf("unsupported api (%v) kind: %v", api, api.Kind())
 	}
-	c.Type = api
+	c.rType = api
 	n := api.NumMethod()
 	if TraceInit {
 		fmt.Printf("api type: %v methods: %d\n", api, n)
@@ -75,14 +79,14 @@ func (c *Caller) SetType(api reflect.Type) error {
 	for _, m := range c.Names {
 		namesMap[m.Method] = m
 	}
-	c.Methods = make(map[string]*Method, n)
+	c.methods = make(map[string]*Method, n)
 	for i := 0; i < n; i++ {
 		method := api.Method(i)
 		m, err := newMethod(method, hasReceiver, namesMap[method.Name])
 		if err != nil {
 			return err
 		}
-		c.Methods[method.Name] = m
+		c.methods[method.Name] = m
 	}
 	return nil
 }
