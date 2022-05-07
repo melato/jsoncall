@@ -19,6 +19,16 @@ func (t *GeneratedClient) Add(p1 int32, p2 int32) (int32, error) {
   return  out.P1, err
 }
 
+type rDiv struct {
+  P1 int32 `json:"P1"`
+}
+
+func (t *GeneratedClient) Div(p1 int32, p2 int32) (int32, error) {
+  var out rDiv
+  err := t.Client.CallV(&out, "Div", p1, p2)
+  return  out.P1, err
+}
+
 type rHello struct {
   P1 string `json:"s"`
 }

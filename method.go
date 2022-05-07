@@ -97,25 +97,31 @@ func (m *Method) unmarshalInputs(receiver interface{}, data []byte) ([]reflect.V
 // If there are more than 1 outputs, return a JSON representation of a map where the keys are "P1", "P2", ...
 // and the values are the outputs
 // If there is an error in marshalling, return nil, *Error
-func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, error) {
+func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, ErrorCode, error) {
 	outMap := make(map[string]interface{})
 	for i, x := range out {
 		v := x.Interface()
 		if m.OutErrors[i] && !x.IsNil() {
 			e := v.(error)
-			v = ToError(e)
+			return nil, ErrUser, e
 		}
 		outMap[m.Names.Out[i]] = v
 	}
-
-	return json.Marshal(outMap)
+	data, err := json.Marshal(outMap)
+	if err != nil {
+		return nil, ErrMarshal, err
+	}
+	if TraceCalls {
+		fmt.Printf("result: %s\n", string(data))
+	}
+	return data, ErrNone, nil
 }
 
 // Call - call a receiver method.
 // Unmarshal the method parameters from JSON and marshal the outputs to JSON
-// arguments and return values are marshalled as a map, with keys "P1", "P2", ...
-// If the last output is of type error, it is unmashalled as *Error
+// arguments and return values are marshalled as a map
 // If there is an error in unmarshalling/marshalling, return nil, *Error
+// If any output is of type error and is not nil, Call() returns nil, ErrUser, and the error
 func (m *Method) Call(receiver interface{}, jsonIn []byte) ([]byte, ErrorCode, error) {
 	rType := reflect.TypeOf(receiver)
 	name := m.Names.Method
@@ -129,15 +135,8 @@ func (m *Method) Call(receiver interface{}, jsonIn []byte) ([]byte, ErrorCode, e
 
 	in, err := m.unmarshalInputs(receiver, jsonIn)
 	if err != nil {
-		return nil, ErrMarshal, &Error{err.Error()}
-	}
-	out := method.Func.Call(in)
-	outputData, err := m.marshalOutputs(out)
-	if err != nil {
 		return nil, ErrMarshal, err
 	}
-	if TraceCalls {
-		fmt.Printf("result: %s\n", string(outputData))
-	}
-	return outputData, ErrNone, nil
+	out := method.Func.Call(in)
+	return m.marshalOutputs(out)
 }

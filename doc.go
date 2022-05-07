@@ -23,12 +23,24 @@ Given a specified api interface type, the client:
 
 - If the HTTP status is not success (2xx):
 
-  - It unmarshals the response body into an (*jsoncall.Error
+  - It unmarshals the response body into an *jsoncall.Error
   - It returns this *Error for the method's error outputs, if any
   - It returns zero values for the method's remaining outputs
 
 The Server:
+  - Determines the method name from the url.  If it doesn't find the method, it returns an error.
+  - It calls the receiver callback to produce a receiver for the method
+  - It unmarshalls the method inputs
+  - It calls the method with the receiver and the inputs
+  - It marshals the outputs into the response body
+  - If there is any error in the above,
+	or if the method returns an output that is declared as "error" and is not nil,
+	the server returns an error HTTP status,
+	it wraps the error message in an Error and marshals this error in the response body.
 
+Customization
+	- The keys used by input/output maps can be configured for each method.  They default to "P1", "P2", ...
+	- The path that is added to the base url can be configured for each method.  It defaults to the method name.
 
 Both Client and Server have hooks for things like providing/checking authentication via HTTP headers
 */

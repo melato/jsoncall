@@ -1,6 +1,7 @@
 package demo
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -16,6 +17,13 @@ func (t *DemoImpl) Hello() (string, error) {
 
 func (t *DemoImpl) Add(a, b int32) (int32, error) {
 	return a + b, nil
+}
+
+func (t *DemoImpl) Div(a, b int32) (int32, error) {
+	if b == 0 {
+		return 0, fmt.Errorf("Division by zero")
+	}
+	return a / b, nil
 }
 
 func (t *DemoImpl) Concat(a, b string) (string, error) {

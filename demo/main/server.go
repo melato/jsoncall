@@ -6,30 +6,7 @@ import (
 	"melato.org/command"
 	"melato.org/jsoncall"
 	"melato.org/jsoncall/demo"
-	"melato.org/jsoncall/generate"
 )
-
-type GenerateOp struct {
-	generate.Generator
-}
-
-func (t *GenerateOp) Init() error {
-	g := &t.Generator
-	g.Init()
-	g.Package = "client"
-	g.Type = "GeneratedClient"
-	g.OutputFile = "../client/generated_client.go"
-	return nil
-}
-
-func (t *GenerateOp) Generate() error {
-	c, err := demo.NewCaller()
-	if err != nil {
-		return err
-	}
-	return t.Output(t.GenerateClient(c))
-
-}
 
 type Server struct {
 	Port       int32
@@ -55,12 +32,6 @@ func (t *Server) Receiver(w http.ResponseWriter, r *http.Request) (interface{}, 
 	return &demo.DemoImpl{}, nil
 }
 
-func (t *GenerateOp) WriteNames(file string) error {
-	var api *demo.Demo
-	names := generate.GenerateMethodNames(api)
-	return generate.WriteMethodNamesJSON(names, file)
-}
-
 func (t *Server) Run() error {
 	caller, err := demo.NewCaller()
 	if err != nil {
@@ -75,11 +46,7 @@ func (t *Server) Run() error {
 
 func main() {
 	var cmd command.SimpleCommand
-	var generateOp GenerateOp
-	cmd.Command("generate").Flags(&generateOp).RunFunc(generateOp.Generate)
-	cmd.Command("names").RunFunc(generateOp.WriteNames)
-
 	var serverOps Server
-	cmd.Command("listen").Flags(&serverOps).RunFunc(serverOps.Run)
+	cmd.Flags(&serverOps).RunFunc(serverOps.Run)
 	command.Main(&cmd)
 }

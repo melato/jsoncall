@@ -20,7 +20,6 @@ type Client struct {
 func (t *Client) responseError(response *http.Response, data []byte) error {
 	var e Error
 	err := json.Unmarshal(data, &e)
-	fmt.Printf("unmarshal error: %v\n", err)
 	if err != nil {
 		return fmt.Errorf(response.Status)
 	}

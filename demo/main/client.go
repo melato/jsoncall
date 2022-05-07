@@ -54,6 +54,15 @@ func (t *ClientOps) Add(a, b int32) error {
 	return nil
 }
 
+func (t *ClientOps) Div(a, b int32) error {
+	x, err := t.demo.Div(a, b)
+	if err != nil {
+		return err
+	}
+	fmt.Println(x)
+	return nil
+}
+
 func (t *ClientOps) Wait(seconds int) error {
 	return t.demo.Wait(seconds)
 }
@@ -80,6 +89,7 @@ func Command() *command.SimpleCommand {
 	cmd.Command("ping").RunFunc(ops.Ping)
 	cmd.Command("hello").RunFunc(ops.Hello)
 	cmd.Command("add").RunFunc(ops.Add)
+	cmd.Command("div").RunFunc(ops.Div)
 	cmd.Command("wait").RunFunc(ops.Wait)
 	cmd.Command("reflect").RunFunc(ops.Reflect)
 	return cmd
