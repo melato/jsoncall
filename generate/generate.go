@@ -155,9 +155,9 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *j
 	}
 	if len(fields) > 0 {
 		fmt.Fprintf(w, "  var out %s\n", structName)
-		fmt.Fprintf(w, "  %st.Client.CallV(&out, \"%s\"", errAssign, m.Name)
+		fmt.Fprintf(w, "  %st.Client.Call(&out, \"%s\"", errAssign, m.Name)
 	} else {
-		fmt.Fprintf(w, "  %st.Client.CallV(nil, \"%s\"", errAssign, m.Name)
+		fmt.Fprintf(w, "  %st.Client.Call(nil, \"%s\"", errAssign, m.Name)
 	}
 	g.writeMethodInputs(w, m)
 
@@ -199,7 +199,7 @@ func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
 	fmt.Fprintf(w, ")\n\n")
 	fmt.Fprintf(w, "// %s - Generated client for %s\n", g.Type, t.String())
 	fmt.Fprintf(w, "type %s struct {\n", g.Type)
-	fmt.Fprintf(w, "  Client   *jsoncall.Client\n")
+	fmt.Fprintf(w, "  Client   jsoncall.Client\n")
 	fmt.Fprintf(w, "}\n")
 	namesMap := make(map[string]*jsoncall.MethodNames)
 	for _, m := range c.Names {

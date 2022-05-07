@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-// Server - provides a web service that maps requests to method calls on a receiver
-type Server struct {
+// HttpServer - provides a web service that maps requests to method calls on a receiver
+type HttpServer struct {
 	Port int32
 	// ReceiverFunc - provides a method receiver for each call
 	// If it returns nil, processing of the request stops.
@@ -20,7 +20,7 @@ type Server struct {
 	methodPaths  map[string]*Method
 }
 
-func (t *Server) getBytes(r *http.Request) ([]byte, error) {
+func (t *HttpServer) getBytes(r *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
 	defer r.Body.Close()
 	_, err := io.Copy(&buf, r.Body)
@@ -30,18 +30,18 @@ func (t *Server) getBytes(r *http.Request) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (t *Server) writeResponse(w http.ResponseWriter, status int, data []byte) {
+func (t *HttpServer) writeResponse(w http.ResponseWriter, status int, data []byte) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(data)
 }
 
-func (t *Server) writeError(w http.ResponseWriter, status int, e error) {
+func (t *HttpServer) writeError(w http.ResponseWriter, status int, e error) {
 	data, _ := json.Marshal(ToError(e))
 	t.writeResponse(w, status, data)
 }
 
-func (t *Server) DoService(receiver interface{}, m *Method, w http.ResponseWriter, r *http.Request) {
+func (t *HttpServer) DoService(receiver interface{}, m *Method, w http.ResponseWriter, r *http.Request) {
 	inputData, err := t.getBytes(r)
 
 	var outputData []byte
@@ -72,7 +72,7 @@ func (t *Server) DoService(receiver interface{}, m *Method, w http.ResponseWrite
 	}
 }
 
-func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (t *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	path = strings.TrimPrefix(path, "/")
 	m, found := t.methodPaths[path]
@@ -86,7 +86,7 @@ func (t *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *Server) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
+func (t *HttpServer) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
 	receiver, err := t.ReceiverFunc(w, r)
 	if err == nil {
 		t.DoService(receiver, m, w, r)
@@ -99,7 +99,7 @@ func (t *Server) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) 
 	return
 }
 
-func (t *Server) Run() error {
+func (t *HttpServer) Run() error {
 	t.methodPaths = make(map[string]*Method)
 	for _, m := range t.Caller.Methods {
 		t.methodPaths[m.Names.Path] = m

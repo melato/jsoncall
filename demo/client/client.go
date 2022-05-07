@@ -8,12 +8,10 @@ import (
 )
 
 func NewClient(url string) (demo.Demo, error) {
-	c := &GeneratedClient{}
 	caller, err := demo.NewCaller()
 	if err != nil {
 		return nil, err
 	}
-	c.Client = &jsoncall.Client{Caller: caller}
-	c.Client.Url = url
-	return c, nil
+	c := &jsoncall.HttpClient{Caller: caller, Url: url}
+	return &GeneratedClient{c}, nil
 }

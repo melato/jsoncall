@@ -10,13 +10,15 @@ var TraceInit bool
 var TraceDebug bool
 
 type Caller struct {
-	Type     reflect.Type
+	Type    reflect.Type
 	Methods map[string]*Method
 	Names   []*MethodNames
 }
 
-func HasReceiver(api reflect.Type) bool {
-	if api.Kind() == reflect.Interface {
+// HasReceiver determines whether the methods of a given Type include a receiver first argument
+// It returns false for Interface types, true for other types
+func HasReceiver(rtype reflect.Type) bool {
+	if rtype.Kind() == reflect.Interface {
 		return false
 	}
 	return true

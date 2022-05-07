@@ -11,13 +11,23 @@ import (
 var TraceAuth bool
 var TraceData bool
 
-type Client struct {
-	Url         string
-	InitRequest func(r *http.Request) error
-	Caller      *Caller
+// Client is the interface used by generated clients
+type Client interface {
+	Call(result interface{}, name string, args ...interface{}) error
 }
 
-func (t *Client) responseError(response *http.Response, data []byte) error {
+type HttpClient struct {
+	// Caller specifies the client/server API
+	Caller *Caller
+
+	// Url is prepended to the path for each method.  Required.  Should include trailing "/"
+	Url string
+
+	// InitRequest initializes the request (optional).  Can be used to set authorization headers.
+	InitRequest func(r *http.Request) error
+}
+
+func (t *HttpClient) responseError(response *http.Response, data []byte) error {
 	var e Error
 	err := json.Unmarshal(data, &e)
 	if err != nil {
@@ -26,7 +36,7 @@ func (t *Client) responseError(response *http.Response, data []byte) error {
 	return &e
 }
 
-func (t *Client) callData(m *Method, args []interface{}) ([]byte, error) {
+func (t *HttpClient) callData(m *Method, args []interface{}) ([]byte, error) {
 	data, err := m.MarshalInputs(args...)
 	if err != nil {
 		return nil, err
@@ -62,7 +72,7 @@ func (t *Client) callData(m *Method, args []interface{}) ([]byte, error) {
 	return nil, t.responseError(response, data)
 }
 
-func (t *Client) CallVM(result interface{}, m *Method, args ...interface{}) error {
+func (t *HttpClient) callMethod(result interface{}, m *Method, args ...interface{}) error {
 	data, err := t.callData(m, args)
 	if err != nil {
 		return err
@@ -73,17 +83,10 @@ func (t *Client) CallVM(result interface{}, m *Method, args ...interface{}) erro
 	return nil
 }
 
-func (t *Client) CallV(result interface{}, name string, args ...interface{}) error {
+func (t *HttpClient) Call(result interface{}, name string, args ...interface{}) error {
 	m := t.Caller.Methods[name]
 	if m == nil {
 		return Errorf("no such method: %s", name)
 	}
-	return t.CallVM(result, m, args...)
-}
-
-func (t *Client) ToError(v interface{}) error {
-	if v == nil {
-		return nil
-	}
-	return v.(error)
+	return t.callMethod(result, m, args...)
 }

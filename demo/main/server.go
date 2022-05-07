@@ -37,7 +37,7 @@ func (t *Server) Run() error {
 	if err != nil {
 		return err
 	}
-	server := jsoncall.Server{Caller: caller,
+	server := jsoncall.HttpServer{Caller: caller,
 		ReceiverFunc: t.Receiver,
 		Port:         t.Port,
 	}
