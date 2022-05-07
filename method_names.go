@@ -85,3 +85,12 @@ func (a Names) Merge(b Names) error {
 	}
 	return nil
 }
+
+func ParseNames(data []byte) (Names, error) {
+	var names Names
+	err := json.Unmarshal(data, &names)
+	if err != nil {
+		return nil, err
+	}
+	return names, nil
+}

@@ -2,7 +2,6 @@ package demo
 
 import (
 	_ "embed"
-	"encoding/json"
 
 	"melato.org/jsoncall"
 )
@@ -12,7 +11,7 @@ var demoNames []byte
 
 func NewCaller() (*jsoncall.Caller, error) {
 	var c jsoncall.Caller
-	err := json.Unmarshal(demoNames, &c.Names)
+	err := c.SetNamesJson(demoNames)
 	if err != nil {
 		return nil, err
 	}

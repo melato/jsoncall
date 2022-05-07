@@ -24,6 +24,23 @@ func (c *Caller) Type() reflect.Type {
 	return c.rType
 }
 
+func (c *Caller) SetNames(names Names) {
+	c.Names = names
+}
+
+func (c *Caller) SetNamesJson(data []byte) error {
+	if len(data) == 0 {
+		c.SetNames(nil)
+		return nil
+	}
+	names, err := ParseNames(data)
+	if err != nil {
+		return err
+	}
+	c.SetNames(names)
+	return nil
+}
+
 // HasReceiver determines whether the methods of a given Type include a receiver first argument
 // It returns false for Interface types, true for other types
 func HasReceiver(rtype reflect.Type) bool {

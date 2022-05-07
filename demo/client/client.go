@@ -1,5 +1,5 @@
 // Package client - provides an implementation of demo.Demo that calls a web service.
-// This is a separate package, so the server can compile before generating generated_client.go
+// This is a separate package, so that other packages can compile without generated_client.go
 package client
 
 import (

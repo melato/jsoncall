@@ -22,6 +22,14 @@ func GenerateMethodNames(v interface{}) jsoncall.Names {
 	return result
 }
 
+func ReadNames(file string) (jsoncall.Names, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return jsoncall.ParseNames(data)
+}
+
 func WriteNames(names jsoncall.Names, file string) error {
 	data, err := json.MarshalIndent(names, "", " ")
 	if err != nil {
