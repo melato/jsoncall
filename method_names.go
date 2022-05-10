@@ -64,7 +64,6 @@ func DefaultMethodNames(method reflect.Method, hasReceiver bool) *MethodNames {
 // If the two specifications of a method have different number of inputs or outputs, it returns an error
 // If a method exists in b but not in a, it is ignored
 func (a Names) Merge(b Names) error {
-	fmt.Printf("merging %d names with %d\n", len(a), len(b))
 	bmap := make(map[string]*MethodNames)
 	for _, names := range b {
 		bmap[names.Method] = names

@@ -2,6 +2,7 @@ package generate
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"reflect"
 
@@ -53,6 +54,7 @@ func UpdateMethodNames(v interface{}, file string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("%s: merging %d names with %d\n", file, len(names), len(existingNames))
 	err = names.Merge(existingNames)
 	if err != nil {
 		return err
