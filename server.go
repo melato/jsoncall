@@ -77,7 +77,7 @@ func (t *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path = strings.TrimPrefix(path, "/")
 	m, found := t.methodPaths[path]
 	if TraceCalls {
-		fmt.Printf("path: %s method: %s\n", path, m.Names.Method)
+		fmt.Printf("path: %s method: %s\n", path, m.Desc.Method)
 	}
 	if found {
 		t.ServeMethod(m, w, r)
@@ -102,7 +102,7 @@ func (t *HttpServer) ServeMethod(m *Method, w http.ResponseWriter, r *http.Reque
 func (t *HttpServer) Run() error {
 	t.methodPaths = make(map[string]*Method)
 	for _, m := range t.Caller.methods {
-		t.methodPaths[m.Names.Path] = m
+		t.methodPaths[m.Desc.Path] = m
 	}
 	server := &http.Server{Addr: fmt.Sprintf(":%d", t.Port), Handler: t}
 	log.Printf("starting server at %s\n", server.Addr)

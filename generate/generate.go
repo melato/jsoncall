@@ -107,7 +107,7 @@ type Field struct {
 	JsonName string
 }
 
-func (g *Generator) GetOutputFields(m reflect.Method, names *jsoncall.MethodNames) []Field {
+func (g *Generator) GetOutputFields(m reflect.Method, desc *jsoncall.MethodDescriptor) []Field {
 	var fields []Field
 	var errorp *error
 	errorType := reflect.TypeOf(errorp).Elem()
@@ -120,7 +120,7 @@ func (g *Generator) GetOutputFields(m reflect.Method, names *jsoncall.MethodName
 					Index:    j,
 					Name:     fmt.Sprintf("P%d", j+1),
 					Type:     g.typeName(out),
-					JsonName: names.Out[j],
+					JsonName: desc.Out[j],
 				})
 			}
 		}
@@ -128,8 +128,8 @@ func (g *Generator) GetOutputFields(m reflect.Method, names *jsoncall.MethodName
 	return fields
 }
 
-func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, names *jsoncall.MethodNames) {
-	fields := g.GetOutputFields(m, names)
+func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, desc *jsoncall.MethodDescriptor) {
+	fields := g.GetOutputFields(m, desc)
 	var errorp *error
 	errorType := reflect.TypeOf(errorp).Elem()
 	numOut := m.Type.NumOut()
@@ -201,9 +201,9 @@ func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
 	fmt.Fprintf(w, "type %s struct {\n", g.Type)
 	fmt.Fprintf(w, "  Client   jsoncall.Client\n")
 	fmt.Fprintf(w, "}\n")
-	namesMap := make(map[string]*jsoncall.MethodNames)
-	for _, m := range c.Names {
-		namesMap[m.Method] = m
+	descMap := make(map[string]*jsoncall.MethodDescriptor)
+	for _, m := range c.Desc {
+		descMap[m.Method] = m
 	}
 	n := t.NumMethod()
 	for i := 0; i < n; i++ {
@@ -211,11 +211,11 @@ func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
 		if !m.IsExported() {
 			continue
 		}
-		names := namesMap[m.Name]
-		if names == nil {
-			names = jsoncall.DefaultMethodNames(m, false)
+		desc := descMap[m.Name]
+		if desc == nil {
+			desc = jsoncall.DefaultMethodDescriptor(m, false)
 		}
-		g.generateMethodStruct(w, m, names)
+		g.generateMethodStruct(w, m, desc)
 	}
 	return w.Bytes(), nil
 }

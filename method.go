@@ -7,17 +7,17 @@ import (
 )
 
 type Method struct {
-	Names *MethodNames
+	Desc *MethodDescriptor
 	// InType is a Struct type that containers one field for each method input
 	// It is used by the server to unmarshal the input arguments
 	InType    reflect.Type
 	OutErrors []bool
 }
 
-func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) (*Method, error) {
+func newMethod(method reflect.Method, hasReceiver bool, desc *MethodDescriptor) (*Method, error) {
 	var m Method
-	if names == nil {
-		names = DefaultMethodNames(method, hasReceiver)
+	if desc == nil {
+		desc = DefaultMethodDescriptor(method, hasReceiver)
 	}
 	numIn := method.Type.NumIn()
 	numOut := method.Type.NumOut()
@@ -26,13 +26,13 @@ func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) (*Me
 		offset = 1
 		numIn--
 	}
-	if numIn != len(names.In) {
-		return nil, fmt.Errorf("method %s has %d inputs, but its names definition has %d", method.Name, numIn, len(names.In))
+	if numIn != len(desc.In) {
+		return nil, fmt.Errorf("method %s has %d inputs, but its descriptor has %d", method.Name, numIn, len(desc.In))
 	}
-	if numOut != len(names.Out) {
-		return nil, fmt.Errorf("method %s has %d outputs, but its names definition has %d", method.Name, numOut, len(names.Out))
+	if numOut != len(desc.Out) {
+		return nil, fmt.Errorf("method %s has %d outputs, but its descriptor has %d", method.Name, numOut, len(desc.Out))
 	}
-	m.Names = names
+	m.Desc = desc
 	if TraceInit {
 		fmt.Printf("method: %s in: %d out: %d\n", method.Name, numIn, numOut)
 	}
@@ -41,7 +41,7 @@ func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) (*Me
 		for i := 0; i < numIn; i++ {
 			var field reflect.StructField
 			field.Name = fmt.Sprintf("P%d", i+1)
-			field.Tag = reflect.StructTag(fmt.Sprintf(`json:"%s"`, names.In[i]))
+			field.Tag = reflect.StructTag(fmt.Sprintf(`json:"%s"`, desc.In[i]))
 			field.Type = method.Type.In(offset + i)
 			fields[i] = field
 			if TraceInit {
@@ -59,7 +59,7 @@ func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) (*Me
 		m.OutErrors = make([]bool, numOut)
 		for i := 0; i < numOut; i++ {
 			var field reflect.StructField
-			field.Name = m.Names.Out[i]
+			field.Name = m.Desc.Out[i]
 			field.Type = method.Type.Out(i)
 			if field.Type == errorType {
 				field.Type = ErrorType
@@ -72,11 +72,11 @@ func newMethod(method reflect.Method, hasReceiver bool, names *MethodNames) (*Me
 }
 
 func (t *Method) MarshalInputs(args ...interface{}) ([]byte, error) {
-	return t.Names.MarshalInputs(args...)
+	return t.Desc.MarshalInputs(args...)
 }
 
 func (m *Method) unmarshalInputs(receiver interface{}, data []byte) ([]reflect.Value, error) {
-	numIn := len(m.Names.In)
+	numIn := len(m.Desc.In)
 	in := make([]reflect.Value, 1+numIn)
 	in[0] = reflect.ValueOf(receiver)
 	if numIn > 0 {
@@ -111,7 +111,7 @@ func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, ErrorCode, error) 
 			e := v.(error)
 			return nil, ErrUser, e
 		}
-		outMap[m.Names.Out[i]] = v
+		outMap[m.Desc.Out[i]] = v
 	}
 	data, err := json.Marshal(outMap)
 	if err != nil {
@@ -130,7 +130,7 @@ func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, ErrorCode, error) 
 // If any output is of type error and is not nil, Call() returns nil, ErrUser, and the error
 func (m *Method) Call(receiver interface{}, jsonIn []byte) ([]byte, ErrorCode, error) {
 	rType := reflect.TypeOf(receiver)
-	name := m.Names.Method
+	name := m.Desc.Method
 	if TraceCalls {
 		fmt.Printf("%v.%s(%s)\n", rType, name, string(jsonIn))
 	}

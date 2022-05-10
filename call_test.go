@@ -39,14 +39,19 @@ func newCaller() *Caller {
 	TraceInit = false
 	TraceData = false
 	var api *TestImpl
-	c, _ := NewJsonCallerP(api)
+	c, _ := NewCaller(api, nil)
 	return c
 }
 
 func TestJsonCallSet(t *testing.T) {
 	c := newCaller()
 	i := &TestImpl{}
-	data, code, err := c.Call("SetA", i, []byte(`{"P1": 7}`))
+	m := c.MethodByName("SetA")
+	if m == nil {
+		t.Fail()
+		return
+	}
+	data, code, err := m.Call(i, []byte(`{"P1": 7}`))
 	if err != nil || code != ErrNone {
 		t.Errorf("error %v", err)
 	}
@@ -60,7 +65,12 @@ func TestJsonCallGet(t *testing.T) {
 	c := newCaller()
 	i := &TestImpl{}
 	i.A = 13
-	data, _, err := c.Call("GetA", i, []byte(`{}`))
+	m := c.MethodByName("GetA")
+	if m == nil {
+		t.Fail()
+		return
+	}
+	data, _, err := m.Call(i, []byte(`{}`))
 	if err != nil {
 		t.Errorf("error %v", err)
 	}
@@ -79,7 +89,7 @@ func TestJsonCallDiv(t *testing.T) {
 	c := newCaller()
 	TraceData = true
 	i := &TestImpl{}
-	m := c.methods["Div"]
+	m := c.MethodByName("Div")
 	if m == nil {
 		t.Fatalf("method not found")
 	}
@@ -87,7 +97,7 @@ func TestJsonCallDiv(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal error: %v", err)
 	}
-	data, code, err := c.Call("Div", i, data)
+	data, code, err := m.Call(i, data)
 	if err != nil || code != ErrNone {
 		t.Fatalf("call error code: %v, err: %v", code, err)
 	}
@@ -105,13 +115,15 @@ func TestJsonCallDiv(t *testing.T) {
 func TestJsonCallError(t *testing.T) {
 	c := newCaller()
 	i := &TestImpl{}
-	data, _, err := c.Call("Div", i, []byte(`{"P1":3,"P2":0}`))
-	if err != nil {
-		t.Errorf("error %v", err)
+	m := c.MethodByName("Div")
+	if m == nil {
+		t.Fatalf("method not found")
 	}
-	s := string(data)
-	if s != `{"P1":0,"P2":{"error":"division by 0"}}` {
-		fmt.Println(s)
-		t.Fail()
+	data, _, err := m.Call(i, []byte(`{"P1":3,"P2":0}`))
+	if err == nil {
+		t.Errorf("expected error")
+	}
+	if data != nil {
+		t.Errorf("expected nil: %s", string(data))
 	}
 }

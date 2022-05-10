@@ -41,7 +41,7 @@ func (t *NamesOp) Init() error {
 
 func (t *NamesOp) UpdateNames() error {
 	var api *demo.Demo
-	return generate.UpdateMethodNames(api, t.File)
+	return generate.UpdateDescriptor(api, t.File)
 }
 
 func main() {

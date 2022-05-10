@@ -11,10 +11,10 @@ var TraceDebug bool
 
 // Caller specifies a set of methods and how to call them.
 type Caller struct {
-	// Names determines what methods are used for marshalling/unmarshalling each method call.
-	// If any method's names are missing, default names are used.
+	// Desc determines what methods are used for marshalling/unmarshalling each method call.
+	// If any method descriptor is missing, a default descriptor are used.
 	// If you set this, you must do set it before calling SetType or SetTypePointer
-	Names Names
+	Desc ApiDescriptor
 
 	rType   reflect.Type
 	methods map[string]*Method
@@ -24,20 +24,20 @@ func (c *Caller) Type() reflect.Type {
 	return c.rType
 }
 
-func (c *Caller) SetNames(names Names) {
-	c.Names = names
+func (c *Caller) SetDescriptor(desc ApiDescriptor) {
+	c.Desc = desc
 }
 
-func (c *Caller) SetNamesJson(data []byte) error {
+func (c *Caller) SetDescriptorJson(data []byte) error {
 	if len(data) == 0 {
-		c.SetNames(nil)
+		c.SetDescriptor(nil)
 		return nil
 	}
-	names, err := ParseNames(data)
+	desc, err := ParseApiDescriptor(data)
 	if err != nil {
 		return err
 	}
-	c.SetNames(names)
+	c.SetDescriptor(desc)
 	return nil
 }
 
@@ -92,14 +92,14 @@ func (c *Caller) SetType(api reflect.Type) error {
 	if TraceInit {
 		fmt.Printf("api type: %v methods: %d\n", api, n)
 	}
-	namesMap := make(map[string]*MethodNames)
-	for _, m := range c.Names {
-		namesMap[m.Method] = m
+	descMap := make(map[string]*MethodDescriptor)
+	for _, m := range c.Desc {
+		descMap[m.Method] = m
 	}
 	c.methods = make(map[string]*Method, n)
 	for i := 0; i < n; i++ {
 		method := api.Method(i)
-		m, err := newMethod(method, hasReceiver, namesMap[method.Name])
+		m, err := newMethod(method, hasReceiver, descMap[method.Name])
 		if err != nil {
 			return err
 		}
@@ -108,11 +108,15 @@ func (c *Caller) SetType(api reflect.Type) error {
 	return nil
 }
 
+func (c *Caller) MethodByName(name string) *Method {
+	return c.methods[name]
+}
+
 // NewCaller creates a new caller for the prototype methods
-// jsonNames is an optional JSON representation of Names
-func NewCaller(proto interface{}, jsonNames []byte) (*Caller, error) {
+// descJson is an optional JSON representation of ApiDescriptor
+func NewCaller(proto interface{}, descJson []byte) (*Caller, error) {
 	var c Caller
-	err := c.SetNamesJson(jsonNames)
+	err := c.SetDescriptorJson(descJson)
 	if err != nil {
 		return nil, err
 	}

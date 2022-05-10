@@ -6,8 +6,8 @@ import (
 	"reflect"
 )
 
-// MethodNames provides external names to use when marshalling/unmarshalling a method, its inputs, and its outputs
-type MethodNames struct {
+// MethodDescriptor provides external names to use when marshalling/unmarshalling a method, its inputs, and its outputs
+type MethodDescriptor struct {
 	// Method is the name of the Go Method
 	Method string `json:"method"`
 	// Path is the name of the method used in transit, typically part of a URL
@@ -18,10 +18,10 @@ type MethodNames struct {
 	Out []string `json:"out"`
 }
 
-// Names provides external names for methods, their inputs and their outputs
-type Names []*MethodNames
+// ApiDescriptor has method descriptors
+type ApiDescriptor []*MethodDescriptor
 
-func (t *MethodNames) MarshalInputs(args ...interface{}) ([]byte, error) {
+func (t *MethodDescriptor) MarshalInputs(args ...interface{}) ([]byte, error) {
 	if len(args) != len(t.In) {
 		return nil, fmt.Errorf("wrong # of arguments for %s: %d/%d", t.Method, len(args), len(t.In))
 	}
@@ -34,8 +34,8 @@ func (t *MethodNames) MarshalInputs(args ...interface{}) ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func DefaultMethodNames(method reflect.Method, hasReceiver bool) *MethodNames {
-	var m MethodNames
+func DefaultMethodDescriptor(method reflect.Method, hasReceiver bool) *MethodDescriptor {
+	var m MethodDescriptor
 	m.Method = method.Name
 	m.Path = method.Name
 	numIn := method.Type.NumIn()
@@ -59,14 +59,14 @@ func DefaultMethodNames(method reflect.Method, hasReceiver bool) *MethodNames {
 }
 
 // Merge overrides a with b
-// Typically a would be the default method names, and b would be user-defined
+// Typically a would contain the default method descriptors, and b would contain user-defined method descriptors
 // If a method exists in both a and b, it uses the specification from b
 // If the two specifications of a method have different number of inputs or outputs, it returns an error
 // If a method exists in b but not in a, it is ignored
-func (a Names) Merge(b Names) error {
-	bmap := make(map[string]*MethodNames)
-	for _, names := range b {
-		bmap[names.Method] = names
+func (a ApiDescriptor) Merge(b ApiDescriptor) error {
+	bmap := make(map[string]*MethodDescriptor)
+	for _, m := range b {
+		bmap[m.Method] = m
 	}
 	for _, x := range a {
 		y, exists := bmap[x.Method]
@@ -85,11 +85,11 @@ func (a Names) Merge(b Names) error {
 	return nil
 }
 
-func ParseNames(data []byte) (Names, error) {
-	var names Names
-	err := json.Unmarshal(data, &names)
+func ParseApiDescriptor(data []byte) (ApiDescriptor, error) {
+	var desc ApiDescriptor
+	err := json.Unmarshal(data, &desc)
 	if err != nil {
 		return nil, err
 	}
-	return names, nil
+	return desc, nil
 }

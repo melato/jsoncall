@@ -41,7 +41,7 @@ func (t *HttpClient) callData(m *Method, args []interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	request, err := http.NewRequest(http.MethodPost, t.Url+m.Names.Path, bytes.NewReader(data))
+	request, err := http.NewRequest(http.MethodPost, t.Url+m.Desc.Path, bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
