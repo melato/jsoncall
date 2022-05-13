@@ -65,30 +65,9 @@ func (g *Generator) typeName(rtype reflect.Type) string {
 }
 
 func (g *Generator) writeMethodHeader(w io.Writer, m reflect.Method) {
-	fmt.Fprintf(w, "\nfunc (t *%s) %s(", g.Type, m.Name)
-	numIn := m.Type.NumIn()
-	for j := g.inOffset; j < numIn; j++ {
-		in := m.Type.In(j)
-		if j > g.inOffset {
-			fmt.Fprintf(w, ", ")
-		}
-		fmt.Fprintf(w, "p%d %s", 1+j-g.inOffset, g.typeName(in))
-	}
-	fmt.Fprintf(w, ") ")
-	numOut := m.Type.NumOut()
-	if numOut > 1 {
-		fmt.Fprintf(w, "(")
-	}
-	for j := 0; j < numOut; j++ {
-		out := m.Type.Out(j)
-		if j > 0 {
-			fmt.Fprintf(w, ", ")
-		}
-		fmt.Fprintf(w, "%s", g.typeName(out))
-	}
-	if numOut > 1 {
-		fmt.Fprintf(w, ") ")
-	}
+	writer := Writer{Writer: w, Package: g.Package}
+	fmt.Fprintf(w, "\n")
+	writer.WriteMethodSignature(g.Type, m, g.inOffset)
 	fmt.Fprintf(w, "{\n")
 }
 
