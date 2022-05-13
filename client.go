@@ -39,7 +39,7 @@ func (t *HttpClient) responseError(response *http.Response, data []byte) error {
 func (t *HttpClient) callData(m *Method, args []interface{}) ([]byte, error) {
 	data, err := m.MarshalInputs(args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal %s: %v", m.Desc.Method, err)
 	}
 	request, err := http.NewRequest(http.MethodPost, t.Url+m.Desc.Path, bytes.NewReader(data))
 	if err != nil {
