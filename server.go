@@ -10,14 +10,25 @@ import (
 	"strings"
 )
 
+type ReceiverProvider func(ReceiverContext) (interface{}, error)
+
+type ReceiverContext interface {
+	Request() *http.Request
+	WriteHeader(statusCode int)
+}
+
 // HttpServer - provides a web service that maps requests to method calls on a receiver
 type HttpServer struct {
-	Port int32
-	// ReceiverFunc - provides a method receiver for each call
-	// If it returns nil, processing of the request stops.
-	ReceiverFunc func(w http.ResponseWriter, r *http.Request) (interface{}, error)
-	Caller       *Caller
-	methodPaths  map[string]*Method
+	Port        int32
+	receiver    ReceiverProvider
+	Caller      *Caller
+	methodPaths map[string]*Method
+}
+
+// SetReceiverProvider - provides a method receiver for each call
+// If it returns nil, processing of the request stops.
+func (t *HttpServer) SetReceiverProvider(r ReceiverProvider) {
+	t.receiver = r
 }
 
 func (t *HttpServer) getBytes(r *http.Request) ([]byte, error) {
@@ -86,8 +97,26 @@ func (t *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type methodContext struct {
+	request *http.Request
+	writer  http.ResponseWriter
+}
+
+func (c *methodContext) Request() *http.Request {
+	return c.request
+}
+
+func (c *methodContext) WriteHeader(statusCode int) {
+	c.writer.WriteHeader(statusCode)
+}
+
 func (t *HttpServer) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
-	receiver, err := t.ReceiverFunc(w, r)
+	var receiver interface{}
+	var err error
+	if t.receiver != nil {
+		c := methodContext{request: r, writer: w}
+		receiver, err = t.receiver(&c)
+	}
 	if err == nil {
 		t.DoService(receiver, m, w, r)
 	} else {
