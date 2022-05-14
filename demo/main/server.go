@@ -32,20 +32,39 @@ func (t *Server) Receiver(c jsoncall.ReceiverContext) (interface{}, error) {
 	return &demo.DemoImpl{}, nil
 }
 
-func (t *Server) Run() error {
-	caller, err := demo.NewCaller()
-	if err != nil {
-		return err
-	}
-	handler := jsoncall.NewHttpHandler(caller, t.Receiver)
+func (t *Server) Run(handler http.Handler) error {
 	addr := fmt.Sprintf(":%d", t.Port)
 	fmt.Printf("starting server at %s\n", addr)
 	return http.ListenAndServe(addr, handler)
 }
 
+func (t *Server) RunSingle() error {
+	caller, err := demo.NewCaller()
+	if err != nil {
+		return err
+	}
+	handler := jsoncall.NewHttpHandler(caller, t.Receiver)
+	return t.Run(handler)
+}
+
+// RunMux demostrates how to use http.ServeMux to implement a server that handles multiple interfaces
+func (t *Server) RunMux() error {
+	mux := http.NewServeMux()
+	caller, err := demo.NewCaller()
+	if err != nil {
+		return err
+	}
+	handler := jsoncall.NewHttpHandler(caller, t.Receiver)
+	mux.Handle("/", handler)
+	// we could add more handlers.
+	return t.Run(mux)
+}
+
 func main() {
 	var cmd command.SimpleCommand
 	var serverOps Server
-	cmd.Flags(&serverOps).RunFunc(serverOps.Run)
+	cmd.Flags(&serverOps)
+	cmd.Command("run").RunFunc(serverOps.RunSingle)
+	cmd.Command("mux").RunFunc(serverOps.RunMux)
 	command.Main(&cmd)
 }
