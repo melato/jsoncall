@@ -41,7 +41,13 @@ func (t *HttpClient) callData(m *Method, args []interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("marshal %s: %v", m.Desc.Method, err)
 	}
-	request, err := http.NewRequest(http.MethodPost, t.Url+m.Desc.Path, bytes.NewReader(data))
+	var url string
+	if t.Caller.Prefix != "" {
+		url = t.Url + t.Caller.Prefix + "/" + m.Desc.Path
+	} else {
+		url = t.Url + m.Desc.Path
+	}
+	request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -15,23 +14,51 @@ type ReceiverProvider func(ReceiverContext) (interface{}, error)
 type ReceiverContext interface {
 	Request() *http.Request
 	WriteHeader(statusCode int)
+	MethodName() string
 }
 
-// HttpServer - provides a web service that maps requests to method calls on a receiver
-type HttpServer struct {
-	Port        int32
+// HttpHandler - net/http.Handler that maps POST requests to method calls on a receiver
+type HttpHandler struct {
 	receiver    ReceiverProvider
 	Caller      *Caller
 	methodPaths map[string]*Method
+	prefix      string
+}
+
+func NewHttpHandler(caller *Caller, receiver ReceiverProvider) *HttpHandler {
+	var t HttpHandler
+	t.Caller = caller
+	t.receiver = receiver
+	t.methodPaths = make(map[string]*Method)
+	for _, m := range t.Caller.methods {
+		t.methodPaths[m.Desc.Path] = m
+	}
+	t.SetPathPrefix("/")
+	return &t
+}
+
+func (t *HttpHandler) SetPathPrefix(prefix string) {
+	if !strings.HasPrefix(prefix, "/") {
+		prefix = "/" + prefix
+	}
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = prefix + "/"
+	}
+	if t.Caller.Prefix != "" {
+		prefix = prefix + t.Caller.Prefix + "/"
+	}
+	t.prefix = prefix
 }
 
 // SetReceiverProvider - provides a method receiver for each call
 // If it returns nil, processing of the request stops.
-func (t *HttpServer) SetReceiverProvider(r ReceiverProvider) {
+/*
+func (t *HttpHandler) SetReceiverProvider(r ReceiverProvider) {
 	t.receiver = r
 }
+*/
 
-func (t *HttpServer) getBytes(r *http.Request) ([]byte, error) {
+func (t *HttpHandler) getBytes(r *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
 	defer r.Body.Close()
 	_, err := io.Copy(&buf, r.Body)
@@ -41,18 +68,18 @@ func (t *HttpServer) getBytes(r *http.Request) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (t *HttpServer) writeResponse(w http.ResponseWriter, status int, data []byte) {
+func (t *HttpHandler) writeResponse(w http.ResponseWriter, status int, data []byte) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(data)
 }
 
-func (t *HttpServer) writeError(w http.ResponseWriter, status int, e error) {
+func (t *HttpHandler) writeError(w http.ResponseWriter, status int, e error) {
 	data, _ := json.Marshal(ToError(e))
 	t.writeResponse(w, status, data)
 }
 
-func (t *HttpServer) DoService(receiver interface{}, m *Method, w http.ResponseWriter, r *http.Request) {
+func (t *HttpHandler) DoService(receiver interface{}, m *Method, w http.ResponseWriter, r *http.Request) {
 	inputData, err := t.getBytes(r)
 
 	var outputData []byte
@@ -83,23 +110,10 @@ func (t *HttpServer) DoService(receiver interface{}, m *Method, w http.ResponseW
 	}
 }
 
-func (t *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-	path = strings.TrimPrefix(path, "/")
-	m, found := t.methodPaths[path]
-	if TraceCalls {
-		fmt.Printf("path: %s method: %s\n", path, m.Desc.Method)
-	}
-	if found {
-		t.ServeMethod(m, w, r)
-	} else {
-		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.rType, path))
-	}
-}
-
 type methodContext struct {
 	request *http.Request
 	writer  http.ResponseWriter
+	method  *Method
 }
 
 func (c *methodContext) Request() *http.Request {
@@ -110,11 +124,15 @@ func (c *methodContext) WriteHeader(statusCode int) {
 	c.writer.WriteHeader(statusCode)
 }
 
-func (t *HttpServer) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
+func (c *methodContext) MethodName() string {
+	return c.method.Desc.Method
+}
+
+func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
 	var receiver interface{}
 	var err error
 	if t.receiver != nil {
-		c := methodContext{request: r, writer: w}
+		c := methodContext{request: r, writer: w, method: m}
 		receiver, err = t.receiver(&c)
 	}
 	if err == nil {
@@ -128,13 +146,22 @@ func (t *HttpServer) ServeMethod(m *Method, w http.ResponseWriter, r *http.Reque
 	return
 }
 
-func (t *HttpServer) Run() error {
-	t.methodPaths = make(map[string]*Method)
-	for _, m := range t.Caller.methods {
-		t.methodPaths[m.Desc.Path] = m
+func (t *HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	if TraceCalls {
+		fmt.Printf("%s\n", path)
 	}
-	server := &http.Server{Addr: fmt.Sprintf(":%d", t.Port), Handler: t}
-	log.Printf("starting server at %s\n", server.Addr)
-	err := server.ListenAndServe()
-	return err
+	if !strings.HasPrefix(path, t.prefix) {
+		t.writeError(w, http.StatusNotFound, fmt.Errorf("no such path: %s", path))
+	}
+	path = path[len(t.prefix):]
+	m, found := t.methodPaths[path]
+	if TraceCalls {
+		fmt.Printf("path: %s method: %s\n", path, m.Desc.Method)
+	}
+	if found {
+		t.ServeMethod(m, w, r)
+	} else {
+		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.rType, path))
+	}
 }

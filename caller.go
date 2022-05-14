@@ -16,6 +16,8 @@ type Caller struct {
 	// If you set this, you must do set it before calling SetType or SetTypePointer
 	Desc ApiDescriptor
 
+	Prefix string
+
 	rType   reflect.Type
 	methods map[string]*Method
 }

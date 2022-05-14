@@ -9,20 +9,6 @@ import (
 	"melato.org/jsoncall"
 )
 
-func GenerateDescriptor(v interface{}) jsoncall.ApiDescriptor {
-	t := reflect.TypeOf(v).Elem()
-	hasReceiver := jsoncall.HasReceiver(t)
-	var result []*jsoncall.MethodDescriptor
-	numMethods := t.NumMethod()
-	for i := 0; i < numMethods; i++ {
-		m := t.Method(i)
-		if m.IsExported() {
-			result = append(result, jsoncall.DefaultMethodDescriptor(m, hasReceiver))
-		}
-	}
-	return result
-}
-
 func ReadDescriptor(file string) (jsoncall.ApiDescriptor, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
@@ -39,8 +25,26 @@ func WriteDescriptor(desc jsoncall.ApiDescriptor, file string) error {
 	return os.WriteFile(file, data, os.FileMode(0645))
 }
 
-func UpdateDescriptor(v interface{}, file string) error {
-	desc := GenerateDescriptor(v)
+func GenerateDescriptorT(t reflect.Type) jsoncall.ApiDescriptor {
+	hasReceiver := jsoncall.HasReceiver(t)
+	var result []*jsoncall.MethodDescriptor
+	numMethods := t.NumMethod()
+	for i := 0; i < numMethods; i++ {
+		m := t.Method(i)
+		if m.IsExported() {
+			result = append(result, jsoncall.DefaultMethodDescriptor(m, hasReceiver))
+		}
+	}
+	return result
+}
+
+func GenerateDescriptor(v interface{}) jsoncall.ApiDescriptor {
+	t := reflect.TypeOf(v).Elem()
+	return GenerateDescriptorT(t)
+}
+
+func UpdateDescriptorT(t reflect.Type, file string) error {
+	desc := GenerateDescriptorT(t)
 	_, err := os.Stat(file)
 	if err != nil && !os.IsNotExist(err) {
 		return err
@@ -61,4 +65,9 @@ func UpdateDescriptor(v interface{}, file string) error {
 	}
 
 	return WriteDescriptor(desc, file)
+}
+
+func UpdateDescriptor(v interface{}, file string) error {
+	t := reflect.TypeOf(v).Elem()
+	return UpdateDescriptorT(t, file)
 }
