@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"melato.org/command"
@@ -9,9 +10,8 @@ import (
 )
 
 type Server struct {
-	Port       int32
-	ConfigFile string `name:"c" usage:"database config file"`
-	Trace      bool
+	Port  int32
+	Trace bool
 }
 
 func (t *Server) Init() error {
@@ -28,7 +28,7 @@ func (t *Server) Configured() error {
 	return nil
 }
 
-func (t *Server) Receiver(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (t *Server) Receiver(c jsoncall.ReceiverContext) (interface{}, error) {
 	return &demo.DemoImpl{}, nil
 }
 
@@ -37,11 +37,10 @@ func (t *Server) Run() error {
 	if err != nil {
 		return err
 	}
-	server := jsoncall.HttpServer{Caller: caller,
-		ReceiverFunc: t.Receiver,
-		Port:         t.Port,
-	}
-	return server.Run()
+	handler := jsoncall.NewHttpHandler(caller, t.Receiver)
+	addr := fmt.Sprintf(":%d", t.Port)
+	fmt.Printf("starting server at %s\n", addr)
+	return http.ListenAndServe(addr, handler)
 }
 
 func main() {
