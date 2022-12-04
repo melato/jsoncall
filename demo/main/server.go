@@ -55,6 +55,7 @@ func (t *Server) RunMux() error {
 		return err
 	}
 	handler := jsoncall.NewHttpHandler(caller, t.Receiver)
+	handler.SetPathPrefix("a")
 	mux.Handle("/", handler)
 	// we could add more handlers.
 	return t.Run(mux)
