@@ -149,12 +149,15 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 func (t *HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	if TraceCalls {
-		fmt.Printf("%s\n", path)
+		fmt.Printf("path: %s\n", path)
 	}
 	if !strings.HasPrefix(path, t.prefix) {
 		t.writeError(w, http.StatusNotFound, fmt.Errorf("no such path: %s", path))
 	}
 	path = path[len(t.prefix):]
+	if TraceCalls {
+		fmt.Printf("path without prefix: %s\n", path)
+	}
 	m, found := t.methodPaths[path]
 	if found {
 		if TraceCalls {
