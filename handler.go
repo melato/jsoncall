@@ -156,10 +156,10 @@ func (t *HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	path = path[len(t.prefix):]
 	m, found := t.methodPaths[path]
-	if TraceCalls {
-		fmt.Printf("path: %s method: %s\n", path, m.Desc.Method)
-	}
 	if found {
+		if TraceCalls {
+			fmt.Printf("path: %s method: %s\n", path, m.Desc.Method)
+		}
 		t.ServeMethod(m, w, r)
 	} else {
 		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.rType, path))
