@@ -46,10 +46,22 @@ func DefaultMethodDescriptor(name string, numIn int, outErrors []bool) *MethodDe
 	numOut := len(outErrors)
 	if numOut > 0 {
 		m.Out = make([]string, numOut)
+		var numErrors int
+		for _, isError := range outErrors {
+			if isError {
+				numErrors++
+			}
+		}
 		for i, isError := range outErrors {
 			var outName string
 			if isError {
-				outName = fmt.Sprintf("e%d", i+1)
+				if numErrors == 1 {
+					outName = "error"
+				} else {
+					outName = fmt.Sprintf("e%d", i+1)
+				}
+			} else if numOut-numErrors == 1 {
+				outName = "result"
 			} else {
 				outName = fmt.Sprintf("r%d", i+1)
 			}
