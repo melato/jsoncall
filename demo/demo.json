@@ -1,29 +1,5 @@
 [
  {
-  "method": "Add",
-  "path": "add",
-  "in": [
-   "a",
-   "b"
-  ],
-  "out": [
-   "sum",
-   "e"
-  ]
- },
- {
-  "method": "Div",
-  "path": "Div",
-  "in": [
-   "P1",
-   "P2"
-  ],
-  "out": [
-   "P1",
-   "P2"
-  ]
- },
- {
   "method": "Hello",
   "path": "hello",
   "in": null,
@@ -37,6 +13,19 @@
   "path": "ping",
   "in": null,
   "out": [
+   "e"
+  ]
+ },
+ {
+  "method": "Seconds",
+  "path": "seconds",
+  "in": [
+   "hours",
+   "minutes",
+   "seconds"
+  ],
+  "out": [
+   "seconds",
    "e"
   ]
  },

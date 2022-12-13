@@ -28,7 +28,7 @@ func (t *ClientOps) Configured() error {
 		jsoncall.TraceData = true
 	}
 	var err error
-	t.demo, err = client.NewClient(t.Url)
+	t.demo, err = client.NewDemoClient(t.Url)
 	return err
 }
 
@@ -46,20 +46,24 @@ func (t *ClientOps) Hello() error {
 }
 
 func (t *ClientOps) Add(a, b int32) error {
-	x, err := t.demo.Add(a, b)
-	if err != nil {
-		return err
-	}
-	fmt.Println(x)
+	/*
+		x, err := t.demo.Add(a, b)
+		if err != nil {
+			return err
+		}
+		fmt.Println(x)
+	*/
 	return nil
 }
 
 func (t *ClientOps) Div(a, b int32) error {
-	x, err := t.demo.Div(a, b)
-	if err != nil {
-		return err
-	}
-	fmt.Println(x)
+	/*
+		x, err := t.demo.Div(a, b)
+		if err != nil {
+			return err
+		}
+		fmt.Println(x)
+	*/
 	return nil
 }
 

@@ -7,11 +7,12 @@ import (
 	"melato.org/jsoncall/demo"
 )
 
-func NewClient(url string) (demo.Demo, error) {
+func NewDemoClient(url string) (demo.Demo, error) {
 	caller, err := demo.NewCaller()
 	if err != nil {
 		return nil, err
 	}
+	caller.Prefix = "demo"
 	c := &jsoncall.HttpClient{Caller: caller, Url: url}
 	return &GeneratedClient{c}, nil
 }

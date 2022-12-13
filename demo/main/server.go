@@ -23,13 +23,16 @@ func (t *Server) Configured() error {
 	if t.Trace {
 		jsoncall.TraceCalls = true
 		jsoncall.TraceInit = true
-		jsoncall.TraceDebug = true
 	}
 	return nil
 }
 
-func (t *Server) Receiver(c jsoncall.ReceiverContext) (interface{}, error) {
+func (t *Server) DemoReceiver(c jsoncall.ReceiverContext) (interface{}, error) {
 	return &demo.DemoImpl{}, nil
+}
+
+func (t *Server) MathReceiver(c jsoncall.ReceiverContext) (interface{}, error) {
+	return &demo.MathImpl{}, nil
 }
 
 func (t *Server) Run(handler http.Handler) error {
@@ -38,25 +41,41 @@ func (t *Server) Run(handler http.Handler) error {
 	return http.ListenAndServe(addr, handler)
 }
 
-func (t *Server) RunSingle() error {
+func (t *Server) RunDemo() error {
 	caller, err := demo.NewCaller()
 	if err != nil {
 		return err
 	}
-	handler := jsoncall.NewHttpHandler(caller, t.Receiver)
+	handler := jsoncall.NewHttpHandler(caller, t.DemoReceiver)
+	return t.Run(handler)
+}
+
+func (t *Server) RunMath() error {
+	var math *demo.Math
+	caller, err := jsoncall.NewCaller(math, nil)
+	if err != nil {
+		return err
+	}
+	handler := jsoncall.NewHttpHandler(caller, t.MathReceiver)
 	return t.Run(handler)
 }
 
 // RunMux demostrates how to use http.ServeMux to implement a server that handles multiple interfaces
 func (t *Server) RunMux() error {
 	mux := http.NewServeMux()
-	caller, err := demo.NewCaller()
+	demoCaller, err := demo.NewCaller()
 	if err != nil {
 		return err
 	}
-	handler := jsoncall.NewHttpHandler(caller, t.Receiver)
-	handler.SetPathPrefix("a")
-	mux.Handle("/", handler)
+	mux.Handle("/demo/", jsoncall.NewHttpHandler(demoCaller, t.DemoReceiver))
+
+	var math *demo.Math
+	mathCaller, err := jsoncall.NewCaller(math, nil)
+	if err != nil {
+		return err
+	}
+	mux.Handle("/math/", jsoncall.NewHttpHandler(mathCaller, t.MathReceiver))
+
 	// we could add more handlers.
 	return t.Run(mux)
 }
@@ -65,7 +84,8 @@ func main() {
 	var cmd command.SimpleCommand
 	var serverOps Server
 	cmd.Flags(&serverOps)
-	cmd.Command("run").RunFunc(serverOps.RunSingle)
+	cmd.Command("demo").RunFunc(serverOps.RunDemo)
+	cmd.Command("math").RunFunc(serverOps.RunMath)
 	cmd.Command("mux").RunFunc(serverOps.RunMux)
 	command.Main(&cmd)
 }

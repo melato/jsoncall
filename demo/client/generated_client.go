@@ -9,26 +9,6 @@ type GeneratedClient struct {
   Client   jsoncall.Client
 }
 
-type rAdd struct {
-  P1 int32 `json:"sum"`
-}
-
-func (t *GeneratedClient) Add(p1 int32, p2 int32) (int32, error) {
-  var out rAdd
-  err := t.Client.Call(&out, "Add", p1, p2)
-  return  out.P1, err
-}
-
-type rDiv struct {
-  P1 int32 `json:"P1"`
-}
-
-func (t *GeneratedClient) Div(p1 int32, p2 int32) (int32, error) {
-  var out rDiv
-  err := t.Client.Call(&out, "Div", p1, p2)
-  return  out.P1, err
-}
-
 type rHello struct {
   P1 string `json:"s"`
 }
@@ -42,6 +22,16 @@ func (t *GeneratedClient) Hello() (string, error) {
 func (t *GeneratedClient) Ping() error{
   err := t.Client.Call(nil, "Ping")
   return  err
+}
+
+type rSeconds struct {
+  P1 int `json:"seconds"`
+}
+
+func (t *GeneratedClient) Seconds(p1 int, p2 int, p3 int) (int, error) {
+  var out rSeconds
+  err := t.Client.Call(&out, "Seconds", p1, p2, p3)
+  return  out.P1, err
 }
 
 func (t *GeneratedClient) Wait(p1 int) error{

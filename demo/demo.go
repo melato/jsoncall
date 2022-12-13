@@ -1,9 +1,32 @@
 package demo
 
+import (
+	"time"
+)
+
 type Demo interface {
 	Ping() error
 	Hello() (string, error)
-	Add(a, b int32) (int32, error)
-	Div(a, b int32) (int32, error) // can cause a division by zero
 	Wait(seconds int) error
+	Seconds(hours, minutes, seconds int) (int, error)
+}
+
+type DemoImpl struct {
+}
+
+func (t *DemoImpl) Ping() error {
+	return nil
+}
+
+func (t *DemoImpl) Hello() (string, error) {
+	return "hello", nil
+}
+
+func (t *DemoImpl) Seconds(hours, minutes, seconds int) (int, error) {
+	return hours*3600 + minutes*60 + seconds, nil
+}
+
+func (t *DemoImpl) Wait(seconds int) error {
+	time.Sleep(time.Duration(seconds) * time.Second)
+	return nil
 }
