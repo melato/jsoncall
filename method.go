@@ -99,11 +99,14 @@ func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, ErrorCode, error) 
 	outMap := make(map[string]interface{})
 	for i, x := range out {
 		v := x.Interface()
-		if m.OutErrors[i] && !x.IsNil() {
-			e := v.(error)
-			return nil, ErrUser, e
+		if m.OutErrors[i] {
+			if !x.IsNil() {
+				e := v.(error)
+				return nil, ErrUser, e
+			}
+		} else {
+			outMap[m.Desc.Out[i]] = v
 		}
-		outMap[m.Desc.Out[i]] = v
 	}
 	data, err := json.Marshal(outMap)
 	if err != nil {
