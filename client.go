@@ -8,7 +8,6 @@ import (
 	"net/http"
 )
 
-var TraceAuth bool
 var TraceData bool
 
 // Client is the interface used by generated clients

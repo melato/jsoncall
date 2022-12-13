@@ -7,7 +7,6 @@ import (
 
 var TraceCalls bool
 var TraceInit bool
-var TraceDebug bool
 
 // Caller specifies a set of methods and how to call them.
 type Caller struct {
