@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -14,11 +15,22 @@ type ClientOps struct {
 	Url   string
 	Trace bool
 	demo  demo.Demo
+	math  jsoncall.Client
 }
 
 func (t *ClientOps) Init() error {
 	t.Url = "http://localhost:8080/"
 	return nil
+}
+
+func (t *ClientOps) newMathClient() (jsoncall.Client, error) {
+	var math *demo.Math
+	caller, err := jsoncall.NewCaller(math, nil)
+	if err != nil {
+		return nil, err
+	}
+	caller.Prefix = "math"
+	return &jsoncall.HttpClient{Caller: caller, Url: t.Url}, nil
 }
 
 func (t *ClientOps) Configured() error {
@@ -29,6 +41,13 @@ func (t *ClientOps) Configured() error {
 	}
 	var err error
 	t.demo, err = client.NewDemoClient(t.Url)
+	if err != nil {
+		return err
+	}
+	t.math, err = t.newMathClient()
+	if err != nil {
+		return err
+	}
 	return err
 }
 
@@ -45,26 +64,26 @@ func (t *ClientOps) Hello() error {
 	return nil
 }
 
-func (t *ClientOps) Add(a, b int32) error {
-	/*
-		x, err := t.demo.Add(a, b)
-		if err != nil {
-			return err
-		}
-		fmt.Println(x)
-	*/
+func (t *ClientOps) callMath(method string, args ...any) error {
+	var result map[string]any
+	err := t.math.Call(&result, method, args...)
+	if err != nil {
+		return err
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\nj", string(data))
 	return nil
 }
 
+func (t *ClientOps) Add(a, b int32) error {
+	return t.callMath("Add", a, b)
+}
+
 func (t *ClientOps) Div(a, b int32) error {
-	/*
-		x, err := t.demo.Div(a, b)
-		if err != nil {
-			return err
-		}
-		fmt.Println(x)
-	*/
-	return nil
+	return t.callMath("Div", a, b)
 }
 
 func (t *ClientOps) Wait(seconds int) error {
