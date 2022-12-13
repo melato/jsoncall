@@ -14,5 +14,5 @@ func NewDemoClient(url string) (demo.Demo, error) {
 	}
 	caller.Prefix = "demo"
 	c := &jsoncall.HttpClient{Caller: caller, Url: url}
-	return &GeneratedClient{c}, nil
+	return &DemoClient{c}, nil
 }

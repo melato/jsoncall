@@ -16,8 +16,8 @@ func (t *GenerateOp) Init() error {
 	g := &t.Generator
 	g.Init()
 	g.Package = "client"
-	g.Type = "GeneratedClient"
-	g.OutputFile = "../client/generated_client.go"
+	g.Type = "DemoClient"
+	g.OutputFile = "../client/generated_demo.go"
 	return nil
 }
 
