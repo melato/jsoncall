@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strings"
 )
 
@@ -147,24 +148,26 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 }
 
 func (t *HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
+	method := path.Base(r.URL.Path)
 	if TraceCalls {
-		fmt.Printf("path: %s\n", path)
+		fmt.Printf("path: %s, method=%s\n", r.URL.Path, method)
 	}
-	if !strings.HasPrefix(path, t.prefix) {
-		t.writeError(w, http.StatusNotFound, fmt.Errorf("no such path: %s", path))
-	}
-	path = path[len(t.prefix):]
-	if TraceCalls {
-		fmt.Printf("path without prefix: %s\n", path)
-	}
-	m, found := t.methodPaths[path]
+	/*
+		if !strings.HasPrefix(path, t.prefix) {
+			t.writeError(w, http.StatusNotFound, fmt.Errorf("no such path: %s", path))
+		}
+		path = path[len(t.prefix):]
+		if TraceCalls {
+			fmt.Printf("path without prefix: %s\n", path)
+		}
+	*/
+	m, found := t.methodPaths[method]
 	if found {
 		if TraceCalls {
-			fmt.Printf("path: %s method: %s\n", path, m.Desc.Method)
+			fmt.Printf("method: %s\n", m.Desc.Method)
 		}
 		t.ServeMethod(m, w, r)
 	} else {
-		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown api path: %v/%s", t.Caller.rType, path))
+		t.writeError(w, http.StatusNotFound, fmt.Errorf("unknown method: %v.%s", t.Caller.rType, method))
 	}
 }

@@ -1,4 +1,0 @@
-gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/yaml.v2 v2.4.0/go.mod h1:RDklbk79AGWmwhnvt/jBztapEOGDOx6ZbXqjP6csGnQ=
-melato.org/command v0.0.0-20220222082143-ca56ccecf080 h1:TImzAggDZhf6d5vU5xoYkTfnCjlX46DnyZbgLZbarNc=
-melato.org/command v0.0.0-20220222082143-ca56ccecf080/go.mod h1:1f8kdvW0OvX8TOUr4M7Wyad2geJMfBGbs+bN3sBx3eg=
