@@ -16,15 +16,25 @@ type Method struct {
 
 func newMethod(method reflect.Method, hasReceiver bool, desc *MethodDescriptor) (*Method, error) {
 	var m Method
-	if desc == nil {
-		desc = DefaultMethodDescriptor(method, hasReceiver)
-	}
 	numIn := method.Type.NumIn()
 	numOut := method.Type.NumOut()
 	var offset int
 	if hasReceiver {
 		offset = 1
 		numIn--
+	}
+	if numOut > 0 {
+		var errp *error
+		errorType := reflect.TypeOf(errp).Elem()
+		m.OutErrors = make([]bool, numOut)
+		for i := 0; i < numOut; i++ {
+			if method.Type.Out(i) == errorType {
+				m.OutErrors[i] = true
+			}
+		}
+	}
+	if desc == nil {
+		desc = DefaultMethodDescriptor(method.Name, numIn, m.OutErrors)
 	}
 	if numIn != len(desc.In) {
 		return nil, fmt.Errorf("method %s has %d inputs, but its descriptor has %d", method.Name, numIn, len(desc.In))
@@ -49,24 +59,6 @@ func newMethod(method reflect.Method, hasReceiver bool, desc *MethodDescriptor) 
 			}
 		}
 		m.InType = reflect.StructOf(fields)
-	}
-	if numOut > 0 {
-		var errp *error
-		var Errp *Error
-		errorType := reflect.TypeOf(errp).Elem()
-		ErrorType := reflect.TypeOf(Errp)
-		fields := make([]reflect.StructField, numOut)
-		m.OutErrors = make([]bool, numOut)
-		for i := 0; i < numOut; i++ {
-			var field reflect.StructField
-			field.Name = m.Desc.Out[i]
-			field.Type = method.Type.Out(i)
-			if field.Type == errorType {
-				field.Type = ErrorType
-				m.OutErrors[i] = true
-			}
-			fields[i] = field
-		}
 	}
 	return &m, nil
 }

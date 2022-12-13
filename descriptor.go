@@ -3,7 +3,6 @@ package jsoncall
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 // MethodDescriptor provides external names to use when marshalling/unmarshalling a method, its inputs, and its outputs
@@ -34,25 +33,27 @@ func (t *MethodDescriptor) MarshalInputs(args ...interface{}) ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func DefaultMethodDescriptor(method reflect.Method, hasReceiver bool) *MethodDescriptor {
+func DefaultMethodDescriptor(name string, numIn int, outErrors []bool) *MethodDescriptor {
 	var m MethodDescriptor
-	m.Method = method.Name
-	m.Path = method.Name
-	numIn := method.Type.NumIn()
-	if hasReceiver {
-		numIn--
-	}
+	m.Method = name
+	m.Path = name
 	if numIn > 0 {
 		m.In = make([]string, numIn)
 		for i := 0; i < numIn; i++ {
-			m.In[i] = fmt.Sprintf("P%d", i+1)
+			m.In[i] = fmt.Sprintf("p%d", i+1)
 		}
 	}
-	numOut := method.Type.NumOut()
+	numOut := len(outErrors)
 	if numOut > 0 {
 		m.Out = make([]string, numOut)
-		for i := 0; i < numOut; i++ {
-			m.Out[i] = fmt.Sprintf("P%d", i+1)
+		for i, isError := range outErrors {
+			var outName string
+			if isError {
+				outName = fmt.Sprintf("e%d", i+1)
+			} else {
+				outName = fmt.Sprintf("r%d", i+1)
+			}
+			m.Out[i] = outName
 		}
 	}
 	return &m
