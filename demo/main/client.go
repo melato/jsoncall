@@ -74,7 +74,7 @@ func (t *ClientOps) callMath(method string, args ...any) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\nj", string(data))
+	fmt.Printf("%s\n", string(data))
 	return nil
 }
 
