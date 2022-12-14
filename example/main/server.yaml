@@ -18,11 +18,10 @@ commands:
       The interface specifies the methods and their signatures.
       The receiver is passed to each method.
   generate:
-    short: 
-    commands:
-      client:
-        short: generate client stubs
-      descriptors:
-        short: generate api descriptors
-        long: |
-          generates api descriptor .json files                
+    short: generate client stubs and update API .json descriptor files
+    long: |
+      Generates ../client/generated_demo.go
+      Also updates ../demo.json
+      The client and the server should be recompiled after this.
+      generated_demo.go is used only by the client.
+      demol.json is used by both.

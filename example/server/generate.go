@@ -43,3 +43,19 @@ func (t *NamesOp) UpdateNames() error {
 	var api *example.Demo
 	return generate.UpdateDescriptor(api, t.File)
 }
+
+func Generate() error {
+	var g GenerateOp
+	_ = g.Init()
+	err := g.Generate()
+	if err != nil {
+		return err
+	}
+	var names NamesOp
+	_ = names.Init()
+	err = names.UpdateNames()
+	if err != nil {
+		return err
+	}
+	return nil
+}

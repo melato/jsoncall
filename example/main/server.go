@@ -79,15 +79,6 @@ func (t *Server) RunInterface() error {
 	return http.ListenAndServe(":8080", handler)
 }
 
-func GenerateCommand() *command.SimpleCommand {
-	var cmd command.SimpleCommand
-	var generateOp server.GenerateOp
-	cmd.Command("clients").Flags(&generateOp).RunFunc(generateOp.Generate)
-	var namesOp server.NamesOp
-	cmd.Command("descriptors").Flags(&namesOp).RunFunc(namesOp.UpdateNames)
-	return &cmd
-}
-
 func main() {
 	var cmd command.SimpleCommand
 	var serverOps Server
@@ -95,7 +86,7 @@ func main() {
 	cmd.Command("run").RunFunc(serverOps.Run)
 	cmd.Command("receiver").RunFunc(serverOps.RunDirect)
 	cmd.Command("interface").RunFunc(serverOps.RunInterface)
-	cmd.AddCommand("generate", GenerateCommand())
+	cmd.Command("generate").RunFunc(server.Generate)
 	usage.Apply(&cmd, usageData)
 	command.Main(&cmd)
 }
