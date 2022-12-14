@@ -29,6 +29,7 @@ func NewGenerator() *Generator {
 
 func (t *Generator) Init() error {
 	t.InternalTypePrefix = "r"
+	t.Package = "generated"
 	return nil
 }
 

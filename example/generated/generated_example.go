@@ -1,4 +1,4 @@
-package client
+package generated
 
 import (
   "melato.org/jsoncall"

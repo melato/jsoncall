@@ -14,15 +14,15 @@ type GenerateOp struct {
 func (t *GenerateOp) Init() error {
 	g := &t.Generator
 	g.Init()
-	g.Package = "client"
+	g.Package = "generated"
 	g.Type = "DemoClient"
-	g.OutputFile = "../client/generated_demo.go"
+	g.OutputFile = "../generated/generated_demo.go"
 	g.Imports = []string{"melato.org/jsoncall/example"}
 	return nil
 }
 
 func (t *GenerateOp) Generate() error {
-	c, err := example.NewCaller()
+	c, err := example.NewDemoCaller()
 	if err != nil {
 		return err
 	}

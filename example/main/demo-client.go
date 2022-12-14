@@ -10,7 +10,7 @@ import (
 	"melato.org/command"
 	"melato.org/jsoncall"
 	"melato.org/jsoncall/example"
-	"melato.org/jsoncall/example/client"
+	"melato.org/jsoncall/example/generated"
 )
 
 //go:embed demo-client.yaml
@@ -44,7 +44,7 @@ func (t *ClientOps) NewDemoClient(url string) (example.Demo, error) {
 		return nil, err
 	}
 	c := caller.NewHttpClient(t.Url + "demo/")
-	return &client.DemoClient{c}, nil
+	return &generated.DemoClient{c}, nil
 }
 
 func (t *ClientOps) Configured() error {
