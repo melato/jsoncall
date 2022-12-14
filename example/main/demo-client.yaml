@@ -1,0 +1,16 @@
+short: demonstrate a client using jsoncall
+commands:
+  div:
+    short: integer division
+    long: demonstrates a method with a possible error (division by zero)
+    use: <a> <b>
+  time:
+    short: method with multiple outputs
+  time-struct:
+    short: method with struct output
+  time-pointer:
+    short: method with struct pointer output
+  wait: 
+    short: sleep for the specified interval
+
+

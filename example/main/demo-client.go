@@ -13,7 +13,7 @@ import (
 	"melato.org/jsoncall/example/client"
 )
 
-//go:embed client.yaml
+//go:embed demo-client.yaml
 var usageData []byte
 
 type ClientOps struct {
@@ -35,8 +35,16 @@ func (t *ClientOps) newMathClient() (jsoncall.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	caller.Prefix = "math"
-	return &jsoncall.HttpClient{Caller: caller, Url: t.Url}, nil
+	return caller.NewHttpClient(t.Url + "math/"), nil
+}
+
+func (t *ClientOps) NewDemoClient(url string) (example.Demo, error) {
+	caller, err := example.NewDemoCaller()
+	if err != nil {
+		return nil, err
+	}
+	c := caller.NewHttpClient(t.Url + "demo/")
+	return &client.DemoClient{c}, nil
 }
 
 func (t *ClientOps) Configured() error {
@@ -46,7 +54,7 @@ func (t *ClientOps) Configured() error {
 		jsoncall.TraceData = true
 	}
 	var err error
-	t.demo, err = client.NewDemoClient(t.Url)
+	t.demo, err = t.NewDemoClient(t.Url)
 	if err != nil {
 		return err
 	}

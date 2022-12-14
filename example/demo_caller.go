@@ -9,7 +9,7 @@ import (
 //go:embed demo.json
 var demoNames []byte
 
-func NewCaller() (*jsoncall.Caller, error) {
+func NewDemoCaller() (*jsoncall.Caller, error) {
 	var api *Demo
 	return jsoncall.NewCaller(api, demoNames)
 }

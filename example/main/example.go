@@ -6,6 +6,7 @@ import (
 
 	"melato.org/command"
 	"melato.org/jsoncall"
+	"melato.org/jsoncall/example/client"
 	"melato.org/jsoncall/generate"
 )
 
@@ -60,6 +61,29 @@ func ExampleClient() error {
 	return nil
 }
 
+func NewExampleClient() (ExampleInterface, error) {
+	var example *ExampleInterface
+	caller, err := jsoncall.NewCaller(example, nil)
+	if err != nil {
+		return nil, err
+	}
+	c := caller.NewHttpClient("http://localhost:8080/")
+	return &client.ExampleClient{c}, nil
+}
+
+func ExampleClientWithGeneratedCode() error {
+	client, err := NewExampleClient()
+	if err != nil {
+		return err
+	}
+	s, err := client.A("hello", 7)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", s)
+	return nil
+}
+
 func GenerateStub() error {
 	g := generate.NewGenerator()
 	g.Package = "client"
@@ -84,6 +108,7 @@ func main() {
 	cmd.Command("server").RunFunc(ExampleServer)
 	cmd.Command("server-interface").RunFunc(ExampleServerWithInterface)
 	cmd.Command("client").RunFunc(ExampleClient)
+	cmd.Command("generated-client").RunFunc(ExampleClientWithGeneratedCode)
 	cmd.Command("generate").RunFunc(GenerateStub)
 	command.Main(cmd)
 }

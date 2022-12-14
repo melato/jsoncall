@@ -12,7 +12,7 @@ import (
 	"melato.org/jsoncall/example/server"
 )
 
-//go:embed server.yaml
+//go:embed demo-server.yaml
 var usageData []byte
 
 type Server struct {
@@ -44,7 +44,7 @@ func (t *Server) MathReceiver(c jsoncall.ReceiverContext) (interface{}, error) {
 // RunMux demostrates how to use http.ServeMux to implement a server that handles multiple interfaces
 func (t *Server) Run() error {
 	mux := http.NewServeMux()
-	demoCaller, err := example.NewCaller()
+	demoCaller, err := example.NewDemoCaller()
 	if err != nil {
 		return err
 	}
