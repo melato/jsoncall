@@ -22,7 +22,7 @@ commands:
     commands:
       client:
         short: generate client stubs
-      names:
+      descriptors:
         short: generate api descriptors
         long: |
           generates api descriptor .json files                

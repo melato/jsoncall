@@ -18,4 +18,8 @@ commands:
       if the server is not running.
   wait: 
     short: sleep for the specified interval
+  substring: 
+    short: a method with arguments of mixed types
+    use: <string> <start> <length>
+
 

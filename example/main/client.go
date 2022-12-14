@@ -41,7 +41,7 @@ func (t *ClientOps) newMathClient() (jsoncall.Client, error) {
 
 func (t *ClientOps) Configured() error {
 	if t.Trace {
-		jsoncall.TraceInit = true
+		//jsoncall.TraceInit = true
 		jsoncall.TraceCalls = true
 		jsoncall.TraceData = true
 	}
@@ -104,6 +104,24 @@ func (t *ClientOps) Wait(seconds int) error {
 	return t.demo.Wait(seconds)
 }
 
+func (t *ClientOps) Time() error {
+	hour, minute, second, err := t.demo.Time()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%02d:%02d:%02d\n", hour, minute, second)
+	return nil
+}
+
+func (t *ClientOps) Substring(s string, start int, length int) error {
+	s, err := t.demo.Substring(s, start, length)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", s)
+	return nil
+}
+
 func Command() *command.SimpleCommand {
 	cmd := &command.SimpleCommand{}
 	var ops ClientOps
@@ -114,6 +132,8 @@ func Command() *command.SimpleCommand {
 	cmd.Command("add").RunFunc(ops.Add)
 	cmd.Command("div").RunFunc(ops.Div)
 	cmd.Command("wait").RunFunc(ops.Wait)
+	cmd.Command("time").RunFunc(ops.Time)
+	cmd.Command("substring").RunFunc(ops.Substring)
 
 	usage.Apply(cmd, usageData)
 	return cmd

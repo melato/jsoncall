@@ -84,7 +84,7 @@ func GenerateCommand() *command.SimpleCommand {
 	var generateOp server.GenerateOp
 	cmd.Command("client").Flags(&generateOp).RunFunc(generateOp.Generate)
 	var namesOp server.NamesOp
-	cmd.Command("names").Flags(&namesOp).RunFunc(namesOp.UpdateNames)
+	cmd.Command("descriptors").Flags(&namesOp).RunFunc(namesOp.UpdateNames)
 	return &cmd
 }
 

@@ -10,6 +10,8 @@ type Demo interface {
 	Hello() (string, error)
 	Wait(seconds int) error
 	Seconds(hours, minutes, seconds int) (int, error)
+	Time() (hours, minutes, seconds int, err error)
+	Substring(s string, start int, length int) (string, error)
 }
 
 type DemoImpl struct {
@@ -33,4 +35,13 @@ func (t *DemoImpl) Seconds(hours, minutes, seconds int) (int, error) {
 func (t *DemoImpl) Wait(seconds int) error {
 	time.Sleep(time.Duration(seconds) * time.Second)
 	return nil
+}
+
+func (t *DemoImpl) Time() (hour, minute, second int, err error) {
+	now := time.Now()
+	return now.Hour(), now.Minute(), now.Second(), nil
+}
+
+func (t *DemoImpl) Substring(s string, start int, length int) (string, error) {
+	return s[start : start+length], nil
 }

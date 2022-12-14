@@ -36,6 +36,30 @@
   ]
  },
  {
+  "method": "Substring",
+  "path": "substring",
+  "in": [
+   "s",
+   "start",
+   "len"
+  ],
+  "out": [
+   "result",
+   "error"
+  ]
+ },
+ {
+  "method": "Time",
+  "path": "time",
+  "in": null,
+  "out": [
+   "hour",
+   "minute",
+   "second",
+   "error"
+  ]
+ },
+ {
   "method": "Wait",
   "path": "wait",
   "in": [
