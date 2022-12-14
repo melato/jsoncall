@@ -21,6 +21,12 @@ type Generator struct {
 	inOffset           int
 }
 
+func NewGenerator() *Generator {
+	var g Generator
+	g.Init()
+	return &g
+}
+
 func (t *Generator) Init() error {
 	t.InternalTypePrefix = "r"
 	return nil

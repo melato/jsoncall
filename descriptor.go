@@ -20,7 +20,7 @@ type MethodDescriptor struct {
 // ApiDescriptor has method descriptors
 type ApiDescriptor []*MethodDescriptor
 
-func (t *MethodDescriptor) MarshalInputs(args ...interface{}) ([]byte, error) {
+func (t *MethodDescriptor) InputMap(args []interface{}) (map[string]interface{}, error) {
 	if len(args) != len(t.In) {
 		return nil, fmt.Errorf("wrong # of arguments for %s: %d/%d", t.Method, len(args), len(t.In))
 	}
@@ -29,6 +29,14 @@ func (t *MethodDescriptor) MarshalInputs(args ...interface{}) ([]byte, error) {
 		if arg != nil {
 			m[t.In[i]] = arg
 		}
+	}
+	return m, nil
+}
+
+func (t *MethodDescriptor) MarshalInputs(args ...interface{}) ([]byte, error) {
+	m, err := t.InputMap(args)
+	if err != nil {
+		return nil, err
 	}
 	return json.Marshal(m)
 }

@@ -3,6 +3,7 @@ package jsoncall
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -24,11 +25,27 @@ type HttpClient struct {
 	// Caller specifies the client/server API
 	Caller *Caller
 
-	// Url is prepended to the path for each method.  Required.  Should include trailing "/"
+	// Url is prepended to the name of each method.  Should include trailing "/"
 	Url string
 
 	// InitRequest initializes the request (optional).  Can be used to set authorization headers.
 	InitRequest func(r *http.Request) error
+}
+
+// url should include trailing "/"
+func (caller *Caller) NewHttpClient(url string) *HttpClient {
+	if caller.Prefix != "" {
+		url = url + caller.Prefix + "/"
+	}
+	t := NewHttpClient(url)
+	t.Caller = caller
+	return t
+}
+
+func NewHttpClient(url string) *HttpClient {
+	var t HttpClient
+	t.Url = url
+	return &t
 }
 
 func (t *HttpClient) responseError(response *http.Response, data []byte) error {
@@ -40,17 +57,16 @@ func (t *HttpClient) responseError(response *http.Response, data []byte) error {
 	return &e
 }
 
-func (t *HttpClient) callData(m *Method, args []interface{}) ([]byte, error) {
-	data, err := m.MarshalInputs(args...)
-	if err != nil {
-		return nil, fmt.Errorf("marshal %s: %v", m.Desc.Method, err)
-	}
-	var url string
-	if t.Caller.Prefix != "" {
-		url = t.Url + t.Caller.Prefix + "/" + m.Desc.Path
-	} else {
-		url = t.Url + m.Desc.Path
-	}
+type statusError struct {
+	Status int
+}
+
+func (t *statusError) Error() string {
+	return fmt.Sprintf("http status %d", t.Status)
+}
+
+func (t *HttpClient) callData(name string, data []byte) ([]byte, error) {
+	url := t.Url + name
 	if TraceCalls {
 		fmt.Printf("%s %s\n", http.MethodPost, url)
 		fmt.Printf("%s\n", string(data))
@@ -84,24 +100,43 @@ func (t *HttpClient) callData(m *Method, args []interface{}) ([]byte, error) {
 	if 200 <= response.StatusCode && response.StatusCode < 300 {
 		return data, nil
 	}
-	return nil, t.responseError(response, data)
+	return data, &statusError{response.StatusCode}
 }
 
-func (t *HttpClient) callMethod(result interface{}, m *Method, args ...interface{}) error {
-	data, err := t.callData(m, args)
+func IsErrStatus(err error) bool {
+	var statusError *statusError
+	return errors.As(err, &statusError)
+}
+
+// CallJson makes a POST HTTP call.
+// It converts input to JSON and sends it as the body of the request.
+// If there are no errors, and the response status is 2xx, it unmarshals the response body to output
+// If the response status is not 2xx and errorOutput is not nil, and there is no other error, it unmarshals the response body to errorOutput
+func (t *HttpClient) CallJson(name string, input interface{}, output interface{}, errorOutput interface{}) error {
+	data, err := json.Marshal(input)
 	if err != nil {
 		return err
 	}
-	if result != nil {
-		return json.Unmarshal(data, result)
+	data, err = t.callData(name, data)
+	if err == nil {
+		return json.Unmarshal(data, output)
+		fmt.Errorf("marshal %s: %w", name, err)
 	}
-	return nil
+	if errorOutput == nil || !IsErrStatus(err) {
+		return err
+	}
+	_ = json.Unmarshal(data, errorOutput)
+	return err
 }
 
-func (t *HttpClient) Call(result interface{}, name string, args ...interface{}) error {
-	m := t.Caller.methods[name]
-	if m == nil {
+func (t *HttpClient) Call(output interface{}, name string, args ...interface{}) error {
+	method := t.Caller.methods[name]
+	if method == nil {
 		return Errorf("no such method: %s", name)
 	}
-	return t.callMethod(result, m, args...)
+	inputs, err := method.Desc.InputMap(args)
+	if err != nil {
+		return fmt.Errorf("marshal %s: %w", method.Desc.Method, err)
+	}
+	return t.CallJson(name, inputs, output, nil)
 }
