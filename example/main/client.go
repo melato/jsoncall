@@ -57,23 +57,6 @@ func (t *ClientOps) Configured() error {
 	return err
 }
 
-func (t *ClientOps) Ping() error {
-	return t.demo.Ping()
-}
-
-func (t *ClientOps) Nop() {
-	t.demo.Nop()
-}
-
-func (t *ClientOps) Hello() error {
-	s, err := t.demo.Hello()
-	if err != nil {
-		return err
-	}
-	fmt.Println(s)
-	return nil
-}
-
 func (t *ClientOps) callMath(method string, args ...any) error {
 	var response map[string]any
 	err := t.math.Call(&response, method, args...)
@@ -92,10 +75,6 @@ func (t *ClientOps) callMath(method string, args ...any) error {
 	return nil
 }
 
-func (t *ClientOps) Add(a, b int32) error {
-	return t.callMath("Add", a, b)
-}
-
 func (t *ClientOps) Div(a, b int32) error {
 	return t.callMath("Div", a, b)
 }
@@ -104,17 +83,22 @@ func (t *ClientOps) Wait(seconds int) error {
 	return t.demo.Wait(seconds)
 }
 
-func (t *ClientOps) Time() error {
-	hour, minute, second, err := t.demo.Time()
+func (t *ClientOps) Time() {
+	hour, minute, second := t.demo.Time()
+	fmt.Printf("%02d:%02d:%02d\n", hour, minute, second)
+}
+
+func (t *ClientOps) TimeStruct() error {
+	r, err := t.demo.TimeStruct()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%02d:%02d:%02d\n", hour, minute, second)
+	fmt.Printf("%v\n", r)
 	return nil
 }
 
-func (t *ClientOps) Substring(s string, start int, length int) error {
-	s, err := t.demo.Substring(s, start, length)
+func (t *ClientOps) Repeat(s string, count int) error {
+	s, err := t.demo.Repeat(s, count)
 	if err != nil {
 		return err
 	}
@@ -126,14 +110,11 @@ func Command() *command.SimpleCommand {
 	cmd := &command.SimpleCommand{}
 	var ops ClientOps
 	cmd.Flags(&ops)
-	cmd.Command("ping").RunFunc(ops.Ping)
-	cmd.Command("nop").RunFunc(ops.Nop)
-	cmd.Command("hello").RunFunc(ops.Hello)
-	cmd.Command("add").RunFunc(ops.Add)
 	cmd.Command("div").RunFunc(ops.Div)
 	cmd.Command("wait").RunFunc(ops.Wait)
 	cmd.Command("time").RunFunc(ops.Time)
-	cmd.Command("substring").RunFunc(ops.Substring)
+	cmd.Command("time-struct").RunFunc(ops.TimeStruct)
+	cmd.Command("repeat").RunFunc(ops.Repeat)
 
 	usage.Apply(cmd, usageData)
 	return cmd

@@ -1,47 +1,10 @@
 [
  {
-  "method": "Hello",
-  "path": "hello",
-  "in": null,
-  "out": [
-   "s",
-   "e"
-  ]
- },
- {
-  "method": "Nop",
-  "path": "Nop",
-  "in": null,
-  "out": null
- },
- {
-  "method": "Ping",
-  "path": "ping",
-  "in": null,
-  "out": [
-   "e"
-  ]
- },
- {
-  "method": "Seconds",
-  "path": "seconds",
-  "in": [
-   "hours",
-   "minutes",
-   "seconds"
-  ],
-  "out": [
-   "result",
-   "error"
-  ]
- },
- {
-  "method": "Substring",
-  "path": "substring",
+  "method": "Repeat",
+  "path": "repeat",
   "in": [
    "s",
-   "start",
-   "len"
+   "count"
   ],
   "out": [
    "result",
@@ -55,7 +18,15 @@
   "out": [
    "hour",
    "minute",
-   "second",
+   "second"
+  ]
+ },
+ {
+  "method": "TimeStruct",
+  "path": "TimeStruct",
+  "in": null,
+  "out": [
+   "result",
    "error"
   ]
  },

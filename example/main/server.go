@@ -82,7 +82,7 @@ func (t *Server) RunInterface() error {
 func GenerateCommand() *command.SimpleCommand {
 	var cmd command.SimpleCommand
 	var generateOp server.GenerateOp
-	cmd.Command("client").Flags(&generateOp).RunFunc(generateOp.Generate)
+	cmd.Command("clients").Flags(&generateOp).RunFunc(generateOp.Generate)
 	var namesOp server.NamesOp
 	cmd.Command("descriptors").Flags(&namesOp).RunFunc(namesOp.UpdateNames)
 	return &cmd
