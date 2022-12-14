@@ -5,6 +5,7 @@ import (
 )
 
 type Demo interface {
+	Nop()
 	Ping() error
 	Hello() (string, error)
 	Wait(seconds int) error
@@ -16,6 +17,9 @@ type DemoImpl struct {
 
 func (t *DemoImpl) Ping() error {
 	return nil
+}
+
+func (t *DemoImpl) Nop() {
 }
 
 func (t *DemoImpl) Hello() (string, error) {

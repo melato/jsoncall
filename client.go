@@ -10,9 +10,14 @@ import (
 
 var TraceData bool
 
-// Client is the interface used by generated clients
+// Client is the interface used by generated clients.  It can also be used by itself.
 type Client interface {
-	Call(result interface{}, name string, args ...interface{}) error
+	// Call a remote method.  method, args will be used to make the request.
+	// response will be passed to Json.Unmarshal with the response JSON.
+	// A response type that should always work is *map[string]interface{}
+	// Generated clients use  more specific response types by knowing the expected
+	// return types of each method.
+	Call(response interface{}, method string, args ...interface{}) error
 }
 
 type HttpClient struct {

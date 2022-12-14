@@ -19,6 +19,10 @@ func (t *DemoClient) Hello() (string, error) {
   return  out.P1, err
 }
 
+func (t *DemoClient) Nop() {
+  t.Client.Call(nil, "Nop")
+}
+
 func (t *DemoClient) Ping() error{
   err := t.Client.Call(nil, "Ping")
   return  err

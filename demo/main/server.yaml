@@ -1,0 +1,13 @@
+short: demo server
+commands:
+  run:
+    short: run the server
+  generate:
+    short: 
+    commands:
+      client:
+        short: generate client stubs
+      names:
+        short: generate api descriptors
+        long: |
+          generates api descriptor .json files                

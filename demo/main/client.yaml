@@ -1,0 +1,21 @@
+short: demonstrate a client using jsoncall
+commands:
+  add:
+    short: integer addition
+    use: <a> <b>
+  div:
+    short: integer division
+    long: demonstrates a method with a possible error (division by zero)
+    use: <a> <b>
+  hello:
+    short: calls Hello() (string, error)
+  ping:
+    short: calls Demo.Ping()
+  nop:
+    short: calls Demo.Nop()
+    long: |
+      Nop() does not return an error, so it cannot indicate an error
+      if the server is not running.
+  wait: 
+    short: sleep for the specified interval
+

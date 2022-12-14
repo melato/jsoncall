@@ -9,6 +9,12 @@
   ]
  },
  {
+  "method": "Nop",
+  "path": "Nop",
+  "in": null,
+  "out": null
+ },
+ {
   "method": "Ping",
   "path": "ping",
   "in": null,

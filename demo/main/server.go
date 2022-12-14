@@ -1,13 +1,19 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 
 	"melato.org/command"
+	"melato.org/command/usage"
 	"melato.org/jsoncall"
 	"melato.org/jsoncall/demo"
+	"melato.org/jsoncall/demo/server"
 )
+
+//go:embed server.yaml
+var usageData []byte
 
 type Server struct {
 	Port  int32
@@ -56,10 +62,21 @@ func (t *Server) Run() error {
 	return http.ListenAndServe(addr, mux)
 }
 
+func GenerateCommand() *command.SimpleCommand {
+	var cmd command.SimpleCommand
+	var generateOp server.GenerateOp
+	cmd.Command("client").Flags(&generateOp).RunFunc(generateOp.Generate)
+	var namesOp server.NamesOp
+	cmd.Command("names").Flags(&namesOp).RunFunc(namesOp.UpdateNames)
+	return &cmd
+}
+
 func main() {
 	var cmd command.SimpleCommand
 	var serverOps Server
 	cmd.Flags(&serverOps)
 	cmd.Command("run").RunFunc(serverOps.Run)
+	cmd.AddCommand("generate", GenerateCommand())
+	usage.Apply(&cmd, usageData)
 	command.Main(&cmd)
 }

@@ -14,6 +14,22 @@ type Method struct {
 	OutErrors []bool
 }
 
+func getErrorOutputs(method reflect.Method) []bool {
+	numOut := method.Type.NumOut()
+	if numOut == 0 {
+		return nil
+	}
+	var errp *error
+	errorType := reflect.TypeOf(errp).Elem()
+	result := make([]bool, numOut)
+	for i := 0; i < numOut; i++ {
+		if method.Type.Out(i) == errorType {
+			result[i] = true
+		}
+	}
+	return result
+}
+
 func newMethod(method reflect.Method, hasReceiver bool, desc *MethodDescriptor) (*Method, error) {
 	var m Method
 	numIn := method.Type.NumIn()
@@ -23,18 +39,9 @@ func newMethod(method reflect.Method, hasReceiver bool, desc *MethodDescriptor) 
 		offset = 1
 		numIn--
 	}
-	if numOut > 0 {
-		var errp *error
-		errorType := reflect.TypeOf(errp).Elem()
-		m.OutErrors = make([]bool, numOut)
-		for i := 0; i < numOut; i++ {
-			if method.Type.Out(i) == errorType {
-				m.OutErrors[i] = true
-			}
-		}
-	}
+	m.OutErrors = getErrorOutputs(method)
 	if desc == nil {
-		desc = DefaultMethodDescriptor(method.Name, numIn, m.OutErrors)
+		desc = DefaultMethodDescriptor(method, hasReceiver)
 	}
 	if numIn != len(desc.In) {
 		return nil, fmt.Errorf("method %s has %d inputs, but its descriptor has %d", method.Name, numIn, len(desc.In))
