@@ -68,7 +68,7 @@ func NewExampleClient() (ExampleInterface, error) {
 		return nil, err
 	}
 	c := caller.NewHttpClient("http://localhost:8080/")
-	return &generated.ExampleClient{c}, nil
+	return generated.NewExampleClient(c), nil
 }
 
 func ExampleClientWithGeneratedCode() error {

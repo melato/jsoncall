@@ -183,6 +183,11 @@ func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
 		fmt.Fprintf(w, "  \"%s\"\n", s)
 	}
 	fmt.Fprintf(w, ")\n\n")
+
+	fmt.Fprintf(w, "func New%s(h *jsoncall.HttpClient) *%s {\n", g.Type, g.Type)
+	fmt.Fprintf(w, "  return &%s{h}\n", g.Type)
+	fmt.Fprintf(w, "}\n\n")
+
 	fmt.Fprintf(w, "// %s - Generated client for %s\n", g.Type, t.String())
 	fmt.Fprintf(w, "type %s struct {\n", g.Type)
 	fmt.Fprintf(w, "  Client   jsoncall.Client\n")

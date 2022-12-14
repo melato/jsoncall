@@ -5,6 +5,10 @@ import (
   "melato.org/jsoncall/example"
 )
 
+func NewDemoClient(h *jsoncall.HttpClient) *DemoClient {
+  return &DemoClient{h}
+}
+
 // DemoClient - Generated client for example.Demo
 type DemoClient struct {
   Client   jsoncall.Client

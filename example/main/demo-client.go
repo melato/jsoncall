@@ -43,8 +43,8 @@ func (t *ClientOps) NewDemoClient(url string) (example.Demo, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := caller.NewHttpClient(t.Url + "demo/")
-	return &generated.DemoClient{c}, nil
+	c := caller.NewHttpClient("http://localhost:8080/demo/")
+	return generated.NewDemoClient(c), nil
 }
 
 func (t *ClientOps) Configured() error {
