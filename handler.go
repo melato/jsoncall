@@ -24,7 +24,7 @@ type HttpHandler struct {
 	methodPaths map[string]*Method
 }
 
-func NewHttpHandler(caller *Caller, receiver ReceiverProvider) *HttpHandler {
+func (caller *Caller) NewHttpHandler(receiver ReceiverProvider) *HttpHandler {
 	var t HttpHandler
 	t.Caller = caller
 	t.receiver = receiver
@@ -33,6 +33,15 @@ func NewHttpHandler(caller *Caller, receiver ReceiverProvider) *HttpHandler {
 		t.methodPaths[m.Desc.Path] = m
 	}
 	return &t
+}
+
+func NewHttpHandler(receiver interface{}) (http.Handler, error) {
+	caller, err := NewCaller(receiver, nil)
+	if err != nil {
+		return nil, err
+	}
+	var f ReceiverProvider = func(context ReceiverContext) (interface{}, error) { return receiver, nil }
+	return caller.NewHttpHandler(f), nil
 }
 
 // SetReceiverProvider - provides a method receiver for each call

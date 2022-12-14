@@ -165,7 +165,7 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, desc *js
 // GenerateType - Generate a type that implements the methods of type <t>
 func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
 	t := c.Type()
-	if jsoncall.HasReceiver(t) {
+	if t.Kind() != reflect.Interface {
 		g.inOffset = 1
 	}
 	w := &bytes.Buffer{}

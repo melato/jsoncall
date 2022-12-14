@@ -48,14 +48,13 @@ func (t *Server) Run() error {
 	if err != nil {
 		return err
 	}
-	mux.Handle("/demo/", jsoncall.NewHttpHandler(demoCaller, t.DemoReceiver))
+	mux.Handle("/demo/", demoCaller.NewHttpHandler(t.DemoReceiver))
 
-	var math *example.Math
-	mathCaller, err := jsoncall.NewCaller(math, nil)
+	mathHandler, err := jsoncall.NewHttpHandler(&example.MathImpl{})
 	if err != nil {
 		return err
 	}
-	mux.Handle("/math/", jsoncall.NewHttpHandler(mathCaller, t.MathReceiver))
+	mux.Handle("/math/", mathHandler)
 
 	addr := fmt.Sprintf(":%d", t.Port)
 	fmt.Printf("starting server at %s\n", addr)

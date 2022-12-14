@@ -8,7 +8,7 @@ import (
 var TraceCalls bool
 var TraceInit bool
 
-// Caller specifies a set of methods and how to call them.
+// Caller maintains a set of Go methods and calls them via reflection.
 type Caller struct {
 	// Desc determines what methods are used for marshalling/unmarshalling each method call.
 	// If any method descriptor is missing, a default descriptor are used.
@@ -42,15 +42,6 @@ func (c *Caller) SetDescriptorJson(data []byte) error {
 	return nil
 }
 
-// HasReceiver determines whether the methods of a given Type include a receiver first argument
-// It returns false for Interface types, true for other types
-func HasReceiver(rtype reflect.Type) bool {
-	if rtype.Kind() == reflect.Interface {
-		return false
-	}
-	return true
-}
-
 // SetTypePointer is similar to SetType, but infers the type from a provided prototype pointer,
 // which can be a pointer to an interface type or a struct type.
 //
@@ -81,7 +72,7 @@ func (c *Caller) SetType(api reflect.Type) error {
 	if api == nil {
 		return fmt.Errorf("nil api type")
 	}
-	hasReceiver := HasReceiver(api)
+	hasReceiver := api.Kind() != reflect.Interface
 	switch api.Kind() {
 	case reflect.Pointer:
 	case reflect.Interface:

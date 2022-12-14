@@ -26,7 +26,7 @@ func WriteDescriptor(desc jsoncall.ApiDescriptor, file string) error {
 }
 
 func GenerateDescriptorT(t reflect.Type) jsoncall.ApiDescriptor {
-	hasReceiver := jsoncall.HasReceiver(t)
+	hasReceiver := t.Kind() != reflect.Interface
 	var result []*jsoncall.MethodDescriptor
 	numMethods := t.NumMethod()
 	for i := 0; i < numMethods; i++ {
