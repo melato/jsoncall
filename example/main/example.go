@@ -62,13 +62,20 @@ func ExampleClient() error {
 }
 
 func NewExampleClient() (ExampleInterface, error) {
+	// If we haven't generated the client stub yet, this won't compile.
+	// So we can temporarily comment out the rest of the function,
+	// return nil, nil
+	// run "example generate"
+	// and then uncomment the code below
+	// Normally, the program that generates the code would be different from the client
+	// so this would not be a problem.
 	var example *ExampleInterface
 	caller, err := jsoncall.NewCaller(example, nil)
 	if err != nil {
 		return nil, err
 	}
 	c := caller.NewHttpClient("http://localhost:8080/")
-	return generated.NewExampleClient(c), nil
+	return generated.NewExampleInterface(c), nil
 }
 
 func ExampleClientWithGeneratedCode() error {
@@ -87,7 +94,7 @@ func ExampleClientWithGeneratedCode() error {
 func GenerateStub() error {
 	g := generate.NewGenerator()
 	g.Package = "generated"
-	g.Type = "ExampleClient"
+	//g.Type = "ExampleClient"
 	g.OutputFile = "../generated/generated_example.go"
 
 	var example *ExampleInterface

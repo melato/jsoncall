@@ -13,11 +13,13 @@ import (
 
 // Generator - generates client Go code for a web service that uses the jsoncall conventions
 type Generator struct {
-	Package            string
+	Package    string
+	OutputFile string
+
 	Type               string
+	Func               string
 	Imports            []string
 	InternalTypePrefix string
-	OutputFile         string
 	inOffset           int
 }
 
@@ -172,10 +174,17 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, desc *js
 // GenerateType - Generate a type that implements the methods of type <t>
 func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
 	t := c.Type()
+	if g.Type == "" {
+		g.Type = t.Name()
+	}
+	if g.Func == "" {
+		g.Func = "New" + t.Name()
+	}
 	if t.Kind() != reflect.Interface {
 		g.inOffset = 1
 	}
 	w := &bytes.Buffer{}
+	fmt.Fprintf(w, "// Generated code for %s\n", t.String())
 	fmt.Fprintf(w, "package %s\n\n", g.Package)
 	fmt.Fprintf(w, "import (\n")
 	fmt.Fprintf(w, "  \"melato.org/jsoncall\"\n")
@@ -184,7 +193,7 @@ func (g *Generator) GenerateClient(c *jsoncall.Caller) ([]byte, error) {
 	}
 	fmt.Fprintf(w, ")\n\n")
 
-	fmt.Fprintf(w, "func New%s(h *jsoncall.HttpClient) *%s {\n", g.Type, g.Type)
+	fmt.Fprintf(w, "func %s(h *jsoncall.HttpClient) *%s {\n", g.Func, g.Type)
 	fmt.Fprintf(w, "  return &%s{h}\n", g.Type)
 	fmt.Fprintf(w, "}\n\n")
 

@@ -1,3 +1,4 @@
+// Generated code for example.Demo
 package generated
 
 import (
@@ -5,7 +6,7 @@ import (
   "melato.org/jsoncall/example"
 )
 
-func NewDemoClient(h *jsoncall.HttpClient) *DemoClient {
+func NewDemo(h *jsoncall.HttpClient) *DemoClient {
   return &DemoClient{h}
 }
 
