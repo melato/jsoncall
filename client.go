@@ -138,5 +138,5 @@ func (t *HttpClient) Call(output interface{}, name string, args ...interface{}) 
 	if err != nil {
 		return fmt.Errorf("marshal %s: %w", method.Desc.Method, err)
 	}
-	return t.CallJson(name, inputs, output, nil)
+	return t.CallJson(method.Desc.Path, inputs, output, nil)
 }
