@@ -2,6 +2,21 @@ short: demo server
 commands:
   run:
     short: run the server
+    long: |
+      Start a server with two receivers and interfaces.
+      One of the interfaces has an ApiDescriptor specified via an embedded JSON file.
+      There is a new receiver created for each request, for both interfaces.
+  receiver:
+    short: server with just a receiver
+    long: |
+      Start a server with nothing more than a receiver.
+      A receiver is any Go object with methods.
+  interface:
+    short: server with receiver and interface
+    long: |
+      Start a server with a receiver and an interface.
+      The interface specifies the methods and their signatures.
+      The receiver is passed to each method.
   generate:
     short: 
     commands:

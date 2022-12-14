@@ -50,7 +50,8 @@ func (t *Server) Run() error {
 	}
 	mux.Handle("/demo/", demoCaller.NewHttpHandler(t.DemoReceiver))
 
-	mathHandler, err := jsoncall.NewHttpHandler(&example.MathImpl{})
+	var math *example.Math
+	mathHandler, err := jsoncall.NewHttpHandler(&example.MathImpl{}, math)
 	if err != nil {
 		return err
 	}
@@ -59,6 +60,23 @@ func (t *Server) Run() error {
 	addr := fmt.Sprintf(":%d", t.Port)
 	fmt.Printf("starting server at %s\n", addr)
 	return http.ListenAndServe(addr, mux)
+}
+
+func (t *Server) RunDirect() error {
+	handler, err := jsoncall.NewHttpHandler(&example.MathImpl{}, nil)
+	if err != nil {
+		return err
+	}
+	return http.ListenAndServe(":8080", handler)
+}
+
+func (t *Server) RunInterface() error {
+	var api *example.Math
+	handler, err := jsoncall.NewHttpHandler(&example.MathImpl{}, api)
+	if err != nil {
+		return err
+	}
+	return http.ListenAndServe(":8080", handler)
 }
 
 func GenerateCommand() *command.SimpleCommand {
@@ -75,6 +93,8 @@ func main() {
 	var serverOps Server
 	cmd.Flags(&serverOps)
 	cmd.Command("run").RunFunc(serverOps.Run)
+	cmd.Command("receiver").RunFunc(serverOps.RunDirect)
+	cmd.Command("interface").RunFunc(serverOps.RunInterface)
 	cmd.AddCommand("generate", GenerateCommand())
 	usage.Apply(&cmd, usageData)
 	command.Main(&cmd)
