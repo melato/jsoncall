@@ -3,13 +3,13 @@ package example
 import "fmt"
 
 type Math interface {
-	Add(a, b int32) (int32, error)
 	Div(a, b int32) (int32, error) // can cause a division by zero
 }
 
 type MathImpl struct {
 }
 
+// Add is not in the Math interface
 func (t *MathImpl) Add(a, b int32) (int32, error) {
 	return a + b, nil
 }

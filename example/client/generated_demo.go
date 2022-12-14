@@ -32,6 +32,16 @@ func (t *DemoClient) Time() (int, int, int) {
   return  out.P1, out.P2, out.P3
 }
 
+type rTimePointer struct {
+  P1 *example.Time `json:"result"`
+}
+
+func (t *DemoClient) TimePointer() *example.Time{
+  var out rTimePointer
+  t.Client.Call(&out, "TimePointer")
+  return  out.P1
+}
+
 type rTimeStruct struct {
   P1 example.Time `json:"result"`
 }

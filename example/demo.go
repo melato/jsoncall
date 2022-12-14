@@ -17,6 +17,9 @@ type Demo interface {
 	// TimeStruct returns a struct
 	TimeStruct() (Time, error)
 
+	// TimePointer returns a struct pointer
+	TimePointer() *Time
+
 	// Wait waits the specified number of seconds
 	// It can be used to test a long-running response.
 	Wait(seconds int) error
@@ -29,15 +32,8 @@ type Time struct {
 type DemoImpl struct {
 }
 
-func (t *DemoImpl) Ping() error {
-	return nil
-}
-
-func (t *DemoImpl) Nop() {
-}
-
-func (t *DemoImpl) Hello() (string, error) {
-	return "hello", nil
+// Extra a method that is not in the interface
+func (t *DemoImpl) Extra() {
 }
 
 func (t *DemoImpl) Wait(seconds int) error {
@@ -54,6 +50,12 @@ func (t *DemoImpl) TimeStruct() (Time, error) {
 	var m Time
 	m.Hour, m.Minute, m.Second = t.Time()
 	return m, nil
+}
+
+func (t *DemoImpl) TimePointer() *Time {
+	var m Time
+	m.Hour, m.Minute, m.Second = t.Time()
+	return &m
 }
 
 func (t *DemoImpl) Repeat(s string, count int) (string, error) {

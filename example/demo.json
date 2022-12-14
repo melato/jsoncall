@@ -22,6 +22,14 @@
   ]
  },
  {
+  "method": "TimePointer",
+  "path": "TimePointer",
+  "in": null,
+  "out": [
+   "result"
+  ]
+ },
+ {
   "method": "TimeStruct",
   "path": "TimeStruct",
   "in": null,

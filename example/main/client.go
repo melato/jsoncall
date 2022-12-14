@@ -76,7 +76,11 @@ func (t *ClientOps) callMath(method string, args ...any) error {
 }
 
 func (t *ClientOps) Div(a, b int32) error {
-	return t.callMath("Div", a, b)
+	return t.Math("Div", a, b)
+}
+
+func (t *ClientOps) Math(method string, a, b int32) error {
+	return t.callMath(method, a, b)
 }
 
 func (t *ClientOps) Wait(seconds int) error {
@@ -97,6 +101,12 @@ func (t *ClientOps) TimeStruct() error {
 	return nil
 }
 
+func (t *ClientOps) TimePointer() error {
+	r := t.demo.TimePointer()
+	fmt.Printf("%v\n", r)
+	return nil
+}
+
 func (t *ClientOps) Repeat(s string, count int) error {
 	s, err := t.demo.Repeat(s, count)
 	if err != nil {
@@ -111,9 +121,11 @@ func Command() *command.SimpleCommand {
 	var ops ClientOps
 	cmd.Flags(&ops)
 	cmd.Command("div").RunFunc(ops.Div)
+	cmd.Command("math").RunFunc(ops.Math)
 	cmd.Command("wait").RunFunc(ops.Wait)
 	cmd.Command("time").RunFunc(ops.Time)
 	cmd.Command("time-struct").RunFunc(ops.TimeStruct)
+	cmd.Command("time-pointer").RunFunc(ops.TimePointer)
 	cmd.Command("repeat").RunFunc(ops.Repeat)
 
 	usage.Apply(cmd, usageData)
