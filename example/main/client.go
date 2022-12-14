@@ -9,8 +9,8 @@ import (
 
 	"melato.org/command"
 	"melato.org/jsoncall"
-	"melato.org/jsoncall/demo"
-	"melato.org/jsoncall/demo/client"
+	"melato.org/jsoncall/example"
+	"melato.org/jsoncall/example/client"
 )
 
 //go:embed client.yaml
@@ -20,7 +20,7 @@ type ClientOps struct {
 	Url   string
 	Trace bool
 	Json  bool `name:"json" usage:"print json response for Math calls"`
-	demo  demo.Demo
+	demo  example.Demo
 	math  jsoncall.Client
 }
 
@@ -30,7 +30,7 @@ func (t *ClientOps) Init() error {
 }
 
 func (t *ClientOps) newMathClient() (jsoncall.Client, error) {
-	var math *demo.Math
+	var math *example.Math
 	caller, err := jsoncall.NewCaller(math, nil)
 	if err != nil {
 		return nil, err

@@ -4,7 +4,7 @@ import (
   "melato.org/jsoncall"
 )
 
-// DemoClient - Generated client for demo.Demo
+// DemoClient - Generated client for example.Demo
 type DemoClient struct {
   Client   jsoncall.Client
 }

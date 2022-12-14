@@ -1,4 +1,4 @@
-module melato.org/jsoncall/demo
+module melato.org/jsoncall/example
 
 go 1.19
 

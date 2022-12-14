@@ -1,7 +1,7 @@
 package server
 
 import (
-	"melato.org/jsoncall/demo"
+	"melato.org/jsoncall/example"
 	"melato.org/jsoncall/generate"
 )
 
@@ -21,7 +21,7 @@ func (t *GenerateOp) Init() error {
 }
 
 func (t *GenerateOp) Generate() error {
-	c, err := demo.NewCaller()
+	c, err := example.NewCaller()
 	if err != nil {
 		return err
 	}
@@ -39,6 +39,6 @@ func (t *NamesOp) Init() error {
 }
 
 func (t *NamesOp) UpdateNames() error {
-	var api *demo.Demo
+	var api *example.Demo
 	return generate.UpdateDescriptor(api, t.File)
 }

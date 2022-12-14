@@ -8,8 +8,8 @@ import (
 	"melato.org/command"
 	"melato.org/command/usage"
 	"melato.org/jsoncall"
-	"melato.org/jsoncall/demo"
-	"melato.org/jsoncall/demo/server"
+	"melato.org/jsoncall/example"
+	"melato.org/jsoncall/example/server"
 )
 
 //go:embed server.yaml
@@ -34,23 +34,23 @@ func (t *Server) Configured() error {
 }
 
 func (t *Server) DemoReceiver(c jsoncall.ReceiverContext) (interface{}, error) {
-	return &demo.DemoImpl{}, nil
+	return &example.DemoImpl{}, nil
 }
 
 func (t *Server) MathReceiver(c jsoncall.ReceiverContext) (interface{}, error) {
-	return &demo.MathImpl{}, nil
+	return &example.MathImpl{}, nil
 }
 
 // RunMux demostrates how to use http.ServeMux to implement a server that handles multiple interfaces
 func (t *Server) Run() error {
 	mux := http.NewServeMux()
-	demoCaller, err := demo.NewCaller()
+	demoCaller, err := example.NewCaller()
 	if err != nil {
 		return err
 	}
 	mux.Handle("/demo/", jsoncall.NewHttpHandler(demoCaller, t.DemoReceiver))
 
-	var math *demo.Math
+	var math *example.Math
 	mathCaller, err := jsoncall.NewCaller(math, nil)
 	if err != nil {
 		return err

@@ -4,11 +4,11 @@ package client
 
 import (
 	"melato.org/jsoncall"
-	"melato.org/jsoncall/demo"
+	"melato.org/jsoncall/example"
 )
 
-func NewDemoClient(url string) (demo.Demo, error) {
-	caller, err := demo.NewCaller()
+func NewDemoClient(url string) (example.Demo, error) {
+	caller, err := example.NewCaller()
 	if err != nil {
 		return nil, err
 	}
