@@ -35,7 +35,7 @@ func (caller *Caller) NewHttpHandler(receiver ReceiverProvider) *HttpHandler {
 	return &t
 }
 
-func NewHttpHandler(receiver interface{}) (http.Handler, error) {
+func NewHttpHandler(receiver interface{}, interfacePointer interface{}) (http.Handler, error) {
 	caller, err := NewCaller(receiver, nil)
 	if err != nil {
 		return nil, err
