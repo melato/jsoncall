@@ -34,9 +34,6 @@ type HttpClient struct {
 
 // url should include trailing "/"
 func (caller *Caller) NewHttpClient(url string) *HttpClient {
-	if caller.Prefix != "" {
-		url = url + caller.Prefix + "/"
-	}
 	t := NewHttpClient(url)
 	t.Caller = caller
 	return t
