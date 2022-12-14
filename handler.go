@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"path"
-	"strings"
 )
 
 type ReceiverProvider func(ReceiverContext) (interface{}, error)
@@ -23,7 +22,6 @@ type HttpHandler struct {
 	receiver    ReceiverProvider
 	Caller      *Caller
 	methodPaths map[string]*Method
-	prefix      string
 }
 
 func NewHttpHandler(caller *Caller, receiver ReceiverProvider) *HttpHandler {
@@ -34,21 +32,7 @@ func NewHttpHandler(caller *Caller, receiver ReceiverProvider) *HttpHandler {
 	for _, m := range t.Caller.methods {
 		t.methodPaths[m.Desc.Path] = m
 	}
-	t.SetPathPrefix("/")
 	return &t
-}
-
-func (t *HttpHandler) SetPathPrefix(prefix string) {
-	if !strings.HasPrefix(prefix, "/") {
-		prefix = "/" + prefix
-	}
-	if !strings.HasSuffix(prefix, "/") {
-		prefix = prefix + "/"
-	}
-	if t.Caller.Prefix != "" {
-		prefix = prefix + t.Caller.Prefix + "/"
-	}
-	t.prefix = prefix
 }
 
 // SetReceiverProvider - provides a method receiver for each call
