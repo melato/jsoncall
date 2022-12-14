@@ -51,6 +51,10 @@ func (t *HttpClient) callData(m *Method, args []interface{}) ([]byte, error) {
 	} else {
 		url = t.Url + m.Desc.Path
 	}
+	if TraceCalls {
+		fmt.Printf("%s %s\n", http.MethodPost, url)
+		fmt.Printf("%s\n", string(data))
+	}
 	request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return nil, err
@@ -71,7 +75,8 @@ func (t *HttpClient) callData(m *Method, args []interface{}) ([]byte, error) {
 	}
 	data, err = ioutil.ReadAll(response.Body)
 	if TraceData {
-		fmt.Printf("status: %d body: %s\n", response.StatusCode, string(data))
+		fmt.Printf("status: %d\n", response.StatusCode)
+		fmt.Printf("%s\n", string(data))
 	}
 	if err != nil {
 		return nil, err
