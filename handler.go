@@ -17,6 +17,10 @@ type ReceiverContext interface {
 	MethodName() string
 }
 
+func NewReceiverProvider(receiver interface{}) ReceiverProvider {
+	return func(c ReceiverContext) (interface{}, error) { return receiver, nil }
+}
+
 // HttpHandler - net/http.Handler that maps POST requests to method calls on a receiver
 type HttpHandler struct {
 	receiver    ReceiverProvider
