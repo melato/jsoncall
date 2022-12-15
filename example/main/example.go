@@ -7,7 +7,6 @@ import (
 	"melato.org/command"
 	"melato.org/jsoncall"
 	"melato.org/jsoncall/example/generated"
-	"melato.org/jsoncall/generate"
 )
 
 type ExampleInterface interface {
@@ -62,13 +61,6 @@ func ExampleClient() error {
 }
 
 func NewExampleClient() (ExampleInterface, error) {
-	// If we haven't generated the client stub yet, this won't compile.
-	// So we can temporarily comment out the rest of the function,
-	// return nil, nil
-	// run "example generate"
-	// and then uncomment the code below
-	// Normally, the program that generates the code would be different from the client
-	// so this would not be a problem.
 	var example *ExampleInterface
 	caller, err := jsoncall.NewCaller(example, nil)
 	if err != nil {
@@ -91,20 +83,6 @@ func ExampleClientWithGeneratedCode() error {
 	return nil
 }
 
-func GenerateStub() error {
-	g := generate.NewGenerator()
-	g.Package = "generated"
-	//g.Type = "ExampleClient"
-	g.OutputFile = "../generated/generated_example.go"
-
-	var example *ExampleInterface
-	caller, err := jsoncall.NewCaller(example, nil)
-	if err != nil {
-		return err
-	}
-	return g.Output(g.GenerateClient(caller))
-}
-
 func main() {
 	/*
 		jsoncall.TraceInit = true
@@ -116,6 +94,5 @@ func main() {
 	cmd.Command("server-interface").RunFunc(ExampleServerWithInterface)
 	cmd.Command("client").RunFunc(ExampleClient)
 	cmd.Command("generated-client").RunFunc(ExampleClientWithGeneratedCode)
-	cmd.Command("generate").RunFunc(GenerateStub)
 	command.Main(cmd)
 }
