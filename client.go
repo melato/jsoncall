@@ -110,14 +110,19 @@ func IsErrStatus(err error) bool {
 // If there are no errors, and the response status is 2xx, it unmarshals the response body to output
 // If the response status is not 2xx and errorOutput is not nil, and there is no other error, it unmarshals the response body to errorOutput
 func (t *HttpClient) CallJson(name string, input interface{}, output interface{}, errorOutput interface{}) error {
+	if TraceData {
+		fmt.Printf("CallJson %s input:%T output:%T errorOutput:%T\n", name, input, output, errorOutput)
+	}
 	data, err := json.Marshal(input)
 	if err != nil {
 		return err
 	}
 	data, err = t.callData(name, data)
 	if err == nil {
-		return json.Unmarshal(data, output)
-		fmt.Errorf("marshal %s: %w", name, err)
+		if output != nil {
+			return json.Unmarshal(data, output)
+		}
+		return nil
 	}
 	if errorOutput == nil || !IsErrStatus(err) {
 		return err
