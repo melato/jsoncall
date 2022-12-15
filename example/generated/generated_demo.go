@@ -6,7 +6,7 @@ import (
   "melato.org/jsoncall/example"
 )
 
-func NewDemo(h *jsoncall.HttpClient) *DemoClient {
+func NewDemoClient(h *jsoncall.HttpClient) *DemoClient {
   return &DemoClient{h}
 }
 
@@ -16,10 +16,10 @@ type DemoClient struct {
 }
 
 type rRepeat struct {
-  P1 string `json:"result"`
+  P1 []string `json:"result"`
 }
 
-func (t *DemoClient) Repeat(p1 string, p2 int) (string, error) {
+func (t *DemoClient) Repeat(p1 string, p2 int) ([]string, error) {
   var out rRepeat
   err := t.Client.Call(&out, "Repeat", p1, p2)
   return  out.P1, err

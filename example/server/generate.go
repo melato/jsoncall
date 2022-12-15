@@ -16,6 +16,7 @@ func (t *GenerateOp) Init() error {
 	g.Init()
 	g.Package = "generated"
 	g.Type = "DemoClient"
+	g.Func = "NewDemoClient"
 	g.OutputFile = "../generated/generated_demo.go"
 	g.Imports = []string{"melato.org/jsoncall/example"}
 	return nil

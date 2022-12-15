@@ -1,15 +1,14 @@
 package example
 
 import (
-	"strings"
 	"time"
 )
 
 type Demo interface {
-	// Repeat calls strings.Repeat.
-	// It demonstrates  passing arguments of different types.
+	// Repeat returns a []string consisting repeated elements
+	// It demonstrates  inputs and outputs of various types.
 	// It is also an easy way to generate large responses.
-	Repeat(s string, count int) (string, error)
+	Repeat(s string, count int) ([]string, error)
 
 	// Time takes no arguments, returns multiple values, and does not return an error.
 	Time() (hours, minutes, seconds int)
@@ -58,6 +57,10 @@ func (t *DemoImpl) TimePointer() *Time {
 	return &m
 }
 
-func (t *DemoImpl) Repeat(s string, count int) (string, error) {
-	return strings.Repeat(s, count), nil
+func (t *DemoImpl) Repeat(s string, count int) ([]string, error) {
+	list := make([]string, count)
+	for i := 0; i < count; i++ {
+		list[i] = s
+	}
+	return list, nil
 }

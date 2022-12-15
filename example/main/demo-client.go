@@ -116,11 +116,13 @@ func (t *ClientOps) TimePointer() error {
 }
 
 func (t *ClientOps) Repeat(s string, count int) error {
-	s, err := t.demo.Repeat(s, count)
+	list, err := t.demo.Repeat(s, count)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", s)
+	for _, s := range list {
+		fmt.Printf("%s\n", s)
+	}
 	return nil
 }
 
