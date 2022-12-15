@@ -54,9 +54,11 @@ func UpdateDescriptorT(t reflect.Type, file string) error {
 		return err
 	}
 	var existingDescriptor jsoncall.ApiDescriptor
-	err = json.Unmarshal(data, &existingDescriptor)
-	if err != nil {
-		return err
+	if len(data) > 0 {
+		err = json.Unmarshal(data, &existingDescriptor)
+		if err != nil {
+			return err
+		}
 	}
 	fmt.Printf("%s: merging %d methods with %d\n", file, len(desc), len(existingDescriptor))
 	err = desc.Merge(existingDescriptor)
