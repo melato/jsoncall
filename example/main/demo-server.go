@@ -33,12 +33,12 @@ func (t *Server) Configured() error {
 	return nil
 }
 
-func (t *Server) DemoReceiver(c jsoncall.ReceiverContext) (interface{}, error) {
-	return &example.DemoImpl{}, nil
+func (t *Server) DemoReceiver(w http.ResponseWriter, r *http.Request) interface{} {
+	return &example.DemoImpl{}
 }
 
-func (t *Server) MathReceiver(c jsoncall.ReceiverContext) (interface{}, error) {
-	return &example.MathImpl{}, nil
+func (t *Server) MathReceiver(w http.ResponseWriter, r *http.Request) interface{} {
+	return &example.MathImpl{}
 }
 
 // RunMux demostrates how to use http.ServeMux to implement a server that handles multiple interfaces

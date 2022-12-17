@@ -9,26 +9,28 @@ import (
 	"path"
 )
 
-type ReceiverProvider func(ReceiverContext) (interface{}, error)
+// ReceiverFunc is a function that is called at the beginning of each request
+// to provide a receiver for the request method.
+// If it returns nil, then the processing of the request stops, and no receiver methods are called.
+// In that case, it should write an appropriate error response to the ResponseWriter.
+//
+// For example, it may look at the headers of the request, determine
+// the user that is making the request, and incorporate this information
+// in the receiver.
+type ReceiverFunc func(w http.ResponseWriter, r *http.Request) interface{}
 
-type ReceiverContext interface {
-	Request() *http.Request
-	WriteHeader(statusCode int)
-	MethodName() string
-}
-
-func NewReceiverProvider(receiver interface{}) ReceiverProvider {
-	return func(c ReceiverContext) (interface{}, error) { return receiver, nil }
+func NewReceiverFunc(receiver interface{}) ReceiverFunc {
+	return func(w http.ResponseWriter, r *http.Request) interface{} { return receiver }
 }
 
 // HttpHandler - net/http.Handler that maps POST requests to method calls on a receiver
 type HttpHandler struct {
-	receiver    ReceiverProvider
+	receiver    ReceiverFunc
 	Caller      *Caller
 	methodPaths map[string]*Method
 }
 
-func (caller *Caller) NewHttpHandler(receiver ReceiverProvider) *HttpHandler {
+func (caller *Caller) NewHttpHandler(receiver ReceiverFunc) *HttpHandler {
 	var t HttpHandler
 	t.Caller = caller
 	t.receiver = receiver
@@ -44,7 +46,7 @@ func NewHttpHandler(receiver interface{}, interfacePointer interface{}) (http.Ha
 	if err != nil {
 		return nil, err
 	}
-	var f ReceiverProvider = func(context ReceiverContext) (interface{}, error) { return receiver, nil }
+	f := func(w http.ResponseWriter, r *http.Request) interface{} { return receiver }
 	return caller.NewHttpHandler(f), nil
 }
 
@@ -128,20 +130,20 @@ func (c *methodContext) MethodName() string {
 
 func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
 	var receiver interface{}
-	var err error
 	if t.receiver != nil {
-		c := methodContext{request: r, writer: w, method: m}
-		receiver, err = t.receiver(&c)
+		receiver = t.receiver(w, r)
 	}
-	if err == nil {
+	if receiver != nil {
 		t.DoService(receiver, m, w, r)
-	} else {
-		outputData, err2 := json.Marshal(ToError(err))
-		if err2 == nil {
-			w.Write(outputData)
-		}
 	}
-	return
+	/*
+		else {
+			outputData, err2 := json.Marshal(ToError(err))
+			if err2 == nil {
+				w.Write(outputData)
+			}
+		}
+	*/
 }
 
 func (t *HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -4,6 +4,16 @@ commands:
     short: integer division
     long: demonstrates a method with a possible error (division by zero)
     use: <a> <b>
+  repeat:
+    short: return a string slice
+    long: demonstrates a method with inputs and outputs of various types
+    use: <string> <count>
+  math:
+    short: call the Math interface directly
+    long: calls Math methods without using the client stub.
+    use: <Method> [param]...
+    examples:
+    - math Div 6 3
   time:
     short: method with multiple outputs
   time-struct:
