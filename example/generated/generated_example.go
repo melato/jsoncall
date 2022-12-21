@@ -23,3 +23,13 @@ func (t *ExampleInterface) A(p1 string, p2 int) (string, error) {
   err := t.Client.Call(&out, "A", p1, p2)
   return  out.P1, err
 }
+
+type rB struct {
+  P1 string `json:"result"`
+}
+
+func (t *ExampleInterface) B() string{
+  var out rB
+  t.Client.Call(&out, "B")
+  return  out.P1
+}

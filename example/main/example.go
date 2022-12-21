@@ -11,6 +11,7 @@ import (
 
 type ExampleInterface interface {
 	A(s string, d int) (string, error)
+	B() string
 }
 
 type Example struct {
@@ -20,13 +21,12 @@ func (t *Example) A(s string, d int) (string, error) {
 	return fmt.Sprintf("%s:%d", s, d), nil
 }
 
-func (t *Example) B() (string, error) {
-	return "b", nil
+func (t *Example) B() string {
+	return "b"
 }
 
 func ExampleServer() error {
-	var handler http.Handler
-	handler, err := jsoncall.NewHttpHandler(&Example{}, nil)
+	handler, err := jsoncall.NewHttpHandler(&Example{})
 	if err != nil {
 		return err
 	}
@@ -34,12 +34,12 @@ func ExampleServer() error {
 }
 
 func ExampleServerWithInterface() error {
-	var handler http.Handler
-	var api *ExampleInterface
-	handler, err := jsoncall.NewHttpHandler(&Example{}, api)
+	var api *Example
+	handler, err := jsoncall.NewHttpHandler(api)
 	if err != nil {
 		return err
 	}
+	handler.SetReceiver(&Example{})
 	return http.ListenAndServe(":8080", handler)
 }
 

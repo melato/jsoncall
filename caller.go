@@ -5,8 +5,11 @@ import (
 	"reflect"
 )
 
-var TraceCalls bool
-var TraceInit bool
+var (
+	TraceData  bool
+	TraceCalls bool
+	TraceInit  bool
+)
 
 // Caller maintains a set of Go methods and calls them via reflection.
 type Caller struct {

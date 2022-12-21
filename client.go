@@ -9,8 +9,6 @@ import (
 	"net/http"
 )
 
-var TraceData bool
-
 // Client is the interface used by generated clients.  It can also be used by itself.
 type Client interface {
 	// Call a remote method.  method, args will be used to make the request.

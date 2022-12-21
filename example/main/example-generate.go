@@ -9,13 +9,14 @@ import (
 
 type ExampleInterface interface {
 	A(s string, d int) (string, error)
+	B() string
 }
 
 func GenerateStub() error {
 	g := generate.NewGenerator()
 	g.Package = "generated"
-	//g.Type = "ExampleClient"
-	g.OutputFile = "../generated/generated_example.go"
+	g.Func = "NewExampleClient"
+	g.OutputFile = "../generated/example.go"
 
 	var example *ExampleInterface
 	caller, err := jsoncall.NewCaller(example, nil)

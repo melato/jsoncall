@@ -25,15 +25,15 @@ func NewReceiverFunc(receiver interface{}) ReceiverFunc {
 
 // HttpHandler - net/http.Handler that maps POST requests to method calls on a receiver
 type HttpHandler struct {
-	receiver    ReceiverFunc
-	Caller      *Caller
-	methodPaths map[string]*Method
+	ReceiverFunc ReceiverFunc
+	Caller       *Caller
+	methodPaths  map[string]*Method
 }
 
 func (caller *Caller) NewHttpHandler(receiver ReceiverFunc) *HttpHandler {
 	var t HttpHandler
 	t.Caller = caller
-	t.receiver = receiver
+	t.ReceiverFunc = receiver
 	t.methodPaths = make(map[string]*Method)
 	for _, m := range t.Caller.methods {
 		t.methodPaths[m.Desc.Path] = m
@@ -41,22 +41,35 @@ func (caller *Caller) NewHttpHandler(receiver ReceiverFunc) *HttpHandler {
 	return &t
 }
 
-func NewHttpHandler(receiver interface{}, interfacePointer interface{}) (http.Handler, error) {
-	caller, err := NewCaller(receiver, nil)
+// NewHttpHandler creates an http.Handler, using the default API descriptor.
+// The methods and method signatures of the API are the methods of the prototype.
+// prototype is either a pointer to an interface or a pointer to a struct.
+// If it is a pointer to a struct, it is also used as the receiver of the methods,
+// unless another receiver is specified with SetReceiver() or SetReceiverFunc().
+// If you want to specify an Api Descriptor, use a Caller to create the HttpHandler.
+func NewHttpHandler(prototype interface{}) (*HttpHandler, error) {
+	caller, err := NewCaller(prototype, nil)
 	if err != nil {
 		return nil, err
 	}
-	f := func(w http.ResponseWriter, r *http.Request) interface{} { return receiver }
-	return caller.NewHttpHandler(f), nil
+	handler := caller.NewHttpHandler(nil)
+	handler.SetReceiver(prototype)
+	return handler, nil
 }
 
-// SetReceiverProvider - provides a method receiver for each call
-// If it returns nil, processing of the request stops.
-/*
-func (t *HttpHandler) SetReceiverProvider(r ReceiverProvider) {
-	t.receiver = r
+// SetReceiverFunc specifies a function that is called for each request to produce
+// the receiver for the requested method.
+// If it returns nil, the requested method is not called.
+func (t *HttpHandler) SetReceiverFunc(f ReceiverFunc) {
+	t.ReceiverFunc = f
 }
-*/
+
+// SetReceiver specifies the receiver to be used for all requested methods.
+// Calling SetReceiver is equivalent to calling SetReceiveFunc() with a function
+// that returns receiver.
+func (t *HttpHandler) SetReceiver(receiver interface{}) {
+	t.SetReceiverFunc(func(w http.ResponseWriter, r *http.Request) interface{} { return receiver })
+}
 
 func (t *HttpHandler) getBytes(r *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
@@ -130,8 +143,8 @@ func (c *methodContext) MethodName() string {
 
 func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
 	var receiver interface{}
-	if t.receiver != nil {
-		receiver = t.receiver(w, r)
+	if t.ReceiverFunc != nil {
+		receiver = t.ReceiverFunc(w, r)
 	}
 	if receiver != nil {
 		t.DoService(receiver, m, w, r)
