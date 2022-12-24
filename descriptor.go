@@ -12,9 +12,9 @@ type MethodDescriptor struct {
 	// Path is the name of the method used in transit, typically part of a URL
 	Path string `json:"path"`
 	// In - the names of the inputs
-	In []string `json:"in"`
+	In []string `json:"in,omitempty"`
 	// Out - the names of the outputs
-	Out []string `json:"out"`
+	Out []string `json:"out,omitempty"`
 }
 
 // ApiDescriptor has method descriptors
