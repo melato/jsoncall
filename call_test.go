@@ -75,14 +75,10 @@ func TestJsonCallGet(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	s := string(data)
-	if s != `{"P1":13}` {
+	if s != `{"result":13}` {
 		fmt.Printf("get: %s\n", s)
 		t.Fail()
 	}
-}
-
-type rDiv struct {
-	P1 int32
 }
 
 func TestJsonCallDiv(t *testing.T) {
@@ -102,13 +98,14 @@ func TestJsonCallDiv(t *testing.T) {
 		t.Fatalf("call error code: %v, err: %v", code, err)
 	}
 	fmt.Printf("%v\n", string(data))
-	var out rDiv
+	var out map[string]int
 	err = json.Unmarshal(data, &out)
 	if err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if out.P1 != 1 {
-		t.Fatalf("incorrect int result")
+	result := out["result"]
+	if result != 1 {
+		t.Fatalf("incorrect result: %v", result)
 	}
 }
 
@@ -120,10 +117,16 @@ func TestJsonCallError(t *testing.T) {
 		t.Fatalf("method not found")
 	}
 	data, _, err := m.Call(i, []byte(`{"P1":3,"P2":0}`))
-	if err == nil {
-		t.Errorf("expected error")
+	if err != nil {
+		t.Errorf("should not return error")
+		return
 	}
-	if data != nil {
-		t.Errorf("expected nil: %s", string(data))
+	if data == nil {
+		t.Errorf("should return data")
+		return
+	}
+	s := string(data)
+	if s != `{"error":"division by 0","result":0}` {
+		t.Errorf("%s", s)
 	}
 }

@@ -12,7 +12,7 @@ type A struct {
 }
 
 func TestMarshalError(t *testing.T) {
-	a := &A{B: "b", C: &Error{"c"}}
+	a := &A{B: "b", C: newError("c")}
 	data, err := json.Marshal(a)
 	if err != nil {
 		t.Fail()
@@ -39,8 +39,25 @@ func TestUnmarshalNilError(t *testing.T) {
 }
 
 func TestCastError(t *testing.T) {
-	err := &Error{"x"}
+	err := newError("x")
 	var v interface{}
 	v = err
 	_ = v.(error)
+}
+
+type S struct {
+	Error *Error
+}
+
+func TestStringError(t *testing.T) {
+	var s S
+	s.Error = newError("e1")
+	data, err := json.Marshal(&s)
+	if err != nil {
+		t.Fatalf("%v", err)
+		return
+	}
+	if string(data) != `{"Error":"e1"}` {
+		t.Fatalf("%s", string(data))
+	}
 }

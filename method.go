@@ -70,6 +70,15 @@ func newMethod(method reflect.Method, hasReceiver bool, desc *MethodDescriptor) 
 	return &m, nil
 }
 
+func (t *Method) HasErrors() bool {
+	for _, b := range t.OutErrors {
+		if b {
+			return true
+		}
+	}
+	return false
+}
+
 func (t *Method) MarshalInputs(args ...interface{}) ([]byte, error) {
 	return t.Desc.MarshalInputs(args...)
 }
@@ -93,27 +102,29 @@ func (m *Method) unmarshalInputs(receiver interface{}, data []byte) ([]reflect.V
 	return in, nil
 }
 
-// marshalOutputs - convert outputs as returned from a method call to JSON data
-// The outputs are marshalled to JSON as follows:
-// If the last output is of type error, and it is not nil, return nil, *Error
-// If the last output is of type error and it is nil, return the remaining outputs as follows:
-// If there are no outputs, return nil
-// If there is 1 output, return the JSON representation of that output
-// If there are more than 1 outputs, return a JSON representation of a map where the keys are "P1", "P2", ...
-// and the values are the outputs
-// If there is an error in marshalling, return nil, *Error
+/*
+marshalOutputs - convert outputs as returned from a method call to JSON data
+The outputs are marshalled to JSON as a map,
+whose keys are determined by the API descriptor and the value  are the method output values.
+If an output is of type "error" it is converted to its Error() string.
+
+If there is an error in marshalling, return nil, ErrMarshal, error
+*/
 func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, ErrorCode, error) {
+	var errorCode ErrorCode = ErrNone
 	outMap := make(map[string]interface{})
 	for i, x := range out {
 		v := x.Interface()
 		if m.OutErrors[i] {
 			if !x.IsNil() {
+				errorCode = ErrUser
 				e := v.(error)
-				return nil, ErrUser, e
+				v = e.Error()
+			} else {
+				continue
 			}
-		} else {
-			outMap[m.Desc.Out[i]] = v
 		}
+		outMap[m.Desc.Out[i]] = v
 	}
 	data, err := json.Marshal(outMap)
 	if err != nil {
@@ -122,7 +133,7 @@ func (m *Method) marshalOutputs(out []reflect.Value) ([]byte, ErrorCode, error) 
 	if TraceCalls {
 		fmt.Printf("result: %s\n", string(data))
 	}
-	return data, ErrNone, nil
+	return data, errorCode, nil
 }
 
 // Call - call a receiver method.

@@ -126,11 +126,23 @@ func (t *ClientOps) Repeat(s string, count int) error {
 	return nil
 }
 
+func (t *ClientOps) Ping() error {
+	return t.demo.Ping()
+}
+
+func (t *ClientOps) Error() error {
+	s, err := t.demo.Error()
+	fmt.Printf("%s\n", s)
+	return err
+}
+
 func Command() *command.SimpleCommand {
 	cmd := &command.SimpleCommand{}
 	var ops ClientOps
 	cmd.Flags(&ops)
 	cmd.Command("div").RunFunc(ops.Div)
+	cmd.Command("ping").RunFunc(ops.Ping)
+	cmd.Command("error").RunFunc(ops.Error)
 	cmd.Command("math").RunFunc(ops.Math)
 	cmd.Command("wait").RunFunc(ops.Wait)
 	cmd.Command("time").RunFunc(ops.Time)

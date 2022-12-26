@@ -103,14 +103,20 @@ func (g *Generator) GetOutputFields(m reflect.Method, desc *jsoncall.MethodDescr
 	if numOut > 0 {
 		for j := 0; j < numOut; j++ {
 			out := m.Type.Out(j)
+			jsonName := desc.Out[j]
+			var typeName string
 			if out != errorType {
-				fields = append(fields, Field{
-					Index:    j,
-					Name:     fmt.Sprintf("P%d", j+1),
-					Type:     g.typeName(out),
-					JsonName: desc.Out[j],
-				})
+				typeName = g.typeName(out)
+			} else {
+				typeName = "*jsoncall.Error"
+				//jsonName += ",omitempty"
 			}
+			fields = append(fields, Field{
+				Index:    j,
+				Name:     fmt.Sprintf("P%d", j+1),
+				Type:     typeName,
+				JsonName: jsonName,
+			})
 		}
 	}
 	return fields
@@ -118,6 +124,10 @@ func (g *Generator) GetOutputFields(m reflect.Method, desc *jsoncall.MethodDescr
 
 func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, desc *jsoncall.MethodDescriptor) {
 	fields := g.GetOutputFields(m, desc)
+	fieldNames := make(map[int]string)
+	for _, f := range fields {
+		fieldNames[f.Index] = f.Name
+	}
 	var errorp *error
 	errorType := reflect.TypeOf(errorp).Elem()
 	numOut := m.Type.NumOut()
@@ -148,13 +158,9 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, desc *js
 		fmt.Fprintf(w, "  %st.Client.Call(nil, \"%s\"", errAssign, m.Name)
 	}
 	g.writeMethodInputs(w, m)
-
-	if numOut > 0 {
-		fmt.Fprintf(w, "  return ")
-		fieldNames := make(map[int]string)
-		for _, f := range fields {
-			fieldNames[f.Index] = f.Name
-		}
+	if hasError {
+		fmt.Fprintf(w, "  if err != nil {\n")
+		fmt.Fprintf(w, "    return")
 		for j := 0; j < numOut; j++ {
 			if j > 0 {
 				fmt.Fprintf(w, ",")
@@ -164,6 +170,21 @@ func (g *Generator) generateMethodStruct(w io.Writer, m reflect.Method, desc *js
 				fmt.Fprintf(w, " err")
 			} else {
 				fmt.Fprintf(w, " out.%s", fieldNames[j])
+			}
+		}
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "  }\n")
+	}
+	if numOut > 0 {
+		fmt.Fprintf(w, "  return")
+		for j := 0; j < numOut; j++ {
+			if j > 0 {
+				fmt.Fprintf(w, ",")
+			}
+			fmt.Fprintf(w, " out.%s", fieldNames[j])
+			out := m.Type.Out(j)
+			if out == errorType {
+				fmt.Fprintf(w, ".ToError()")
 			}
 		}
 		fmt.Fprintf(w, "\n")

@@ -1,5 +1,20 @@
 [
  {
+  "method": "Error",
+  "path": "Error",
+  "out": [
+   "result",
+   "error"
+  ]
+ },
+ {
+  "method": "Ping",
+  "path": "Ping",
+  "out": [
+   "error"
+  ]
+ },
+ {
   "method": "Repeat",
   "path": "repeat",
   "in": [
@@ -14,7 +29,6 @@
  {
   "method": "Time",
   "path": "time",
-  "in": null,
   "out": [
    "hour",
    "minute",
@@ -24,7 +38,6 @@
  {
   "method": "TimePointer",
   "path": "TimePointer",
-  "in": null,
   "out": [
    "result"
   ]
@@ -32,7 +45,6 @@
  {
   "method": "TimeStruct",
   "path": "TimeStruct",
-  "in": null,
   "out": [
    "result",
    "error"

@@ -94,6 +94,9 @@ func (t *HttpHandler) writeError(w http.ResponseWriter, status int, e error) {
 
 func (t *HttpHandler) DoService(receiver interface{}, m *Method, w http.ResponseWriter, r *http.Request) {
 	inputData, err := t.getBytes(r)
+	if TraceData {
+		fmt.Printf("getBytes: %d %v\n", len(inputData), err)
+	}
 
 	var outputData []byte
 	status := http.StatusInternalServerError
@@ -109,14 +112,14 @@ func (t *HttpHandler) DoService(receiver interface{}, m *Method, w http.Response
 		case ErrMarshal:
 			status = http.StatusBadRequest
 		case ErrNoSuchMethod:
-			status = http.StatusNotFound
+			status = http.StatusNotImplemented
 		case ErrUser:
-			status = http.StatusInternalServerError
+			status = http.StatusUnprocessableEntity
 		default:
 			status = http.StatusInternalServerError
 		}
 	}
-	if err != nil {
+	if err != nil && !m.HasErrors() {
 		t.writeError(w, status, err)
 	} else {
 		t.writeResponse(w, status, outputData)

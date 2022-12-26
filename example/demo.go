@@ -1,6 +1,7 @@
 package example
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -22,6 +23,14 @@ type Demo interface {
 	// Wait waits the specified number of seconds
 	// It can be used to test a long-running response.
 	Wait(seconds int) error
+
+	// Ping should return no errors
+	// can be used to verify that communication is good
+	Ping() error
+
+	// Error returns a string and an error.
+	// Tests error handling.
+	Error() (string, error)
 }
 
 type Time struct {
@@ -63,4 +72,12 @@ func (t *DemoImpl) Repeat(s string, count int) ([]string, error) {
 		list[i] = s
 	}
 	return list, nil
+}
+
+func (t *DemoImpl) Ping() error {
+	return nil
+}
+
+func (t *DemoImpl) Error() (string, error) {
+	return "test", fmt.Errorf("err")
 }

@@ -92,7 +92,7 @@ func (t *HttpClient) callData(name string, data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if 200 <= response.StatusCode && response.StatusCode < 300 {
+	if response.StatusCode == http.StatusOK || response.StatusCode == http.StatusUnprocessableEntity {
 		return data, nil
 	}
 	return data, &statusError{response.StatusCode}
@@ -105,8 +105,10 @@ func IsErrStatus(err error) bool {
 
 // CallJson makes a POST HTTP call.
 // It converts input to JSON and sends it as the body of the request.
-// If there are no errors, and the response status is 2xx, it unmarshals the response body to output
-// If the response status is not 2xx and errorOutput is not nil, and there is no other error, it unmarshals the response body to errorOutput
+// If the response status is 200 or 422, it unmarshals the response body to output and returns nil.
+// Otherwise, it returns an error.
+// Status 422 (http.StatusUnprocessableEntity) indicates that the called method returned an error,
+// and there were no other processing errors before or after the method.
 func (t *HttpClient) CallJson(name string, input interface{}, output interface{}, errorOutput interface{}) error {
 	if TraceData {
 		fmt.Printf("CallJson %s input:%T output:%T errorOutput:%T\n", name, input, output, errorOutput)

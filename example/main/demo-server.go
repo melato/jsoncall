@@ -9,7 +9,6 @@ import (
 	"melato.org/command/usage"
 	"melato.org/jsoncall"
 	"melato.org/jsoncall/example"
-	"melato.org/jsoncall/example/server"
 )
 
 //go:embed demo-server.yaml
@@ -29,6 +28,7 @@ func (t *Server) Configured() error {
 	if t.Trace {
 		jsoncall.TraceCalls = true
 		jsoncall.TraceInit = true
+		jsoncall.TraceData = true
 	}
 	return nil
 }
@@ -51,10 +51,11 @@ func (t *Server) Run() error {
 	mux.Handle("/demo/", demoCaller.NewHttpHandler(t.DemoReceiver))
 
 	var math *example.Math
-	mathHandler, err := jsoncall.NewHttpHandler(&example.MathImpl{}, math)
+	mathHandler, err := jsoncall.NewHttpHandler(math)
 	if err != nil {
 		return err
 	}
+	mathHandler.SetReceiver((&example.MathImpl{}))
 	mux.Handle("/math/", mathHandler)
 
 	addr := fmt.Sprintf(":%d", t.Port)
@@ -63,19 +64,21 @@ func (t *Server) Run() error {
 }
 
 func (t *Server) RunDirect() error {
-	handler, err := jsoncall.NewHttpHandler(&example.MathImpl{}, nil)
+	handler, err := jsoncall.NewHttpHandler(&example.MathImpl{})
 	if err != nil {
 		return err
 	}
+	handler.SetReceiver((&example.MathImpl{}))
 	return http.ListenAndServe(":8080", handler)
 }
 
 func (t *Server) RunInterface() error {
 	var api *example.Math
-	handler, err := jsoncall.NewHttpHandler(&example.MathImpl{}, api)
+	handler, err := jsoncall.NewHttpHandler(api)
 	if err != nil {
 		return err
 	}
+	handler.SetReceiver((&example.MathImpl{}))
 	return http.ListenAndServe(":8080", handler)
 }
 
@@ -86,7 +89,6 @@ func main() {
 	cmd.Command("run").RunFunc(serverOps.Run)
 	cmd.Command("receiver").RunFunc(serverOps.RunDirect)
 	cmd.Command("interface").RunFunc(serverOps.RunInterface)
-	cmd.Command("generate").RunFunc(server.Generate)
 	usage.Apply(&cmd, usageData)
 	command.Main(&cmd)
 }
