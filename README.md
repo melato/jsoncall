@@ -43,16 +43,13 @@ It should get a response like this:
 	handler.SetReceiver(&Example{})
 
 ## The server can use a function that returns a receiver for each request
-	func ExampleProvider(w http.ResponseWriter, r *http.Request) {
+	func ExampleReceiver(w http.ResponseWriter, r *http.Request) {
 		...
 		return &Example{}
 	}
 
-	handler.SetReceiverFunc(ExampleProvider)
+	handler.SetReceiverFunc(ExampleReceiver)
 
-This function can use the request headers to authenticate the request,
-and either incorporate authentication info in the returned receiver,
-or write an authentication error to the response and return nil.
 
 # Go client, without using generated code:
 	var example *ExampleInterface
@@ -63,7 +60,12 @@ or write an authentication error to the response and return nil.
 	err = client.Call(&response, "A", "hello", 2)
 
 # Go client, with generated code:
-	import "{your path}/generated"
+An included code generator, generates client code that implements
+the same interface used by the server.
+
+Generated code is necessary, because Go does not have a mechanism
+to implement an interface at runtime using reflection.
+
 	client, err := generated.NewExampleClient()
 	if err != nil {
 		return err
@@ -85,30 +87,46 @@ or write an authentication error to the response and return nil.
 	}
 	return g.Output(g.GenerateClient(caller))
 
-# melato.org/jsoncall/generate
-The package melato.org/jsoncall/generate
-- Generates or updates .json API descriptor files with new methods.
-- Generates Go client code that implements the Go interface used by the server
-and makes the corresponding requests.
+# ApiDescriptor
+The name of the method in the URL, and the JSON keys
+for the method inputs and outputs can be specified with an ApiDescriptor.
+If there is no explicit API descriptor provided, a default descriptor is used.
+An api descriptor is typically specified as an embedded JSON file,
+which can be generated as follows:
 
-
-# method names and input/output keys
-The server uses the last component of the URL path to select the Method to use.
-The name of the method in the URL, and the JSON keys for the method inputs and outputs can be specified with an ApiDescriptor,
-which can be provided as a JSON file, which can be embedded in the server.
-If there is no explicit API descriptor provided, a default descriptor is used:
-- The last url path component is the name of the Go method.
-- The input parameters of each method are named "p1", "p2", ...
-- If the method has exactly one non-error output (any type other than "error"), it is named "result".
-- Otherwise, non-error outputs are named "r1", "r2", ....
-- If the method has exactly one error output, it is named "error".
-- Otherwise, error outputs are named "e1", "e2", ....
-
-Providing an API descriptor ensures that the Go method names and input/output order can change without affecting any clients.
+```
+var example *ExampleInterface
+desc := generate.GenerateDescriptor(example)
+json.Marshal(desc)
+```
+The resulting JSON is:
+```
+[
+ {
+  "in": [
+   "p1",
+   "p2"
+  ],
+  "method": "A",
+  "out": [
+   "result",
+   "error"
+  ],
+  "path": "A"
+ },
+ {
+  "method": "B",
+  "out": [
+   "result"
+  ],
+  "path": "B"
+ }
+]
+```
 
 # Code generator
 The package melato.org/jsoncall/generate
-- Generates or updates .json API descriptor files with new methods.
+- Generates .json API descriptor files or updates then with new methods.
 - Generates Go client code that implements the Go interface used by the server,
 and makes the corresponding requests.
 
@@ -127,8 +145,9 @@ The default output keys "result" and "error" follow the JSON-RPC conventions, wh
 
 Putting the method name in the url allows us to know how to unmarshal the body of the request into the arguments.  If we encoded the method in the JSON request, as per JSON-RPC, we couldn't unmarshal the request with a single pass.
 
-Putting the method parameters in a map allows us to unmarshal them into a struct (generated via reflection) that has a field for each 
+Putting the method parameters in a map allows us to unmarshal them into a struct (generated via reflection) that has a field for each parameter.
 
 We use a map for the parameters, so we can unmarshal them into their different types.  If we had put the parameters in an array, we could only unmarshal them into one array type, such as []any.  
 
-We could have placed the parameters into a "params" map, as JSON-RPC specifies, add a level of indirection.  This would allow data other than method parameters to be included in the request, but since we use HTTP, we can already add such data in the HTTP headers.
+We could have placed the parameters into a "params" map, as JSON-RPC specifies.
+Perhaps we'll add an option to do this.

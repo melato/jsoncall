@@ -6,6 +6,7 @@ import (
 )
 
 // MethodDescriptor provides external names to use when marshalling/unmarshalling a method, its inputs, and its outputs
+// Providing an API descriptor ensures that the Go method names and input/output order can change without affecting any clients.
 type MethodDescriptor struct {
 	// Method is the name of the Go Method
 	Method string `json:"method"`

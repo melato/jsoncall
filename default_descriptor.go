@@ -5,6 +5,15 @@ import (
 	"reflect"
 )
 
+/* DefaultMethodDescriptor creates a default method descriptor, if one is not provided explicitly.
+The default descriptor specifies:
+- The last url path component is the name of the Go method.
+- The input parameters of each method are named "p1", "p2", ...
+- If the method has exactly one non-error output (any type other than "error"), it is named "result".
+- Otherwise, non-error outputs are named "r1", "r2", ....
+- If the method has exactly one error output, it is named "error".
+- Otherwise, error outputs are named "e1", "e2", ....
+*/
 func DefaultMethodDescriptor(method reflect.Method, hasReceiver bool) *MethodDescriptor {
 	numIn := method.Type.NumIn()
 	if hasReceiver {

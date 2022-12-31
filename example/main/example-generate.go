@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"melato.org/jsoncall"
 	"melato.org/jsoncall/generate"
@@ -26,8 +28,24 @@ func GenerateStub() error {
 	return g.Output(g.GenerateClient(caller))
 }
 
+func GenerateDescriptor() error {
+	var example *ExampleInterface
+	desc := generate.GenerateDescriptor(example)
+	data, err := json.Marshal(desc)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile("example.json", data, 0666)
+}
+
 func main() {
-	err := GenerateStub()
+	var err error
+	if err == nil {
+		err = GenerateDescriptor()
+	}
+	if err == nil {
+		err = GenerateStub()
+	}
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
