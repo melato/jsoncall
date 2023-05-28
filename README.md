@@ -1,142 +1,173 @@
 jsoncall is a Go module that facilitates creating HTTP web services from Go interfaces,
 using reflection to marshal/unmarshal Go method inputs/outputs to/from a single JSON object.
 
-# Example server
-	import "net/http"
-	
-	type Example struct {}
-	func (t *Example) A(s string, d int) (string, error) {...}
-	func (t *Example) B() string {...}
-
-	func ExampleServer() error {
-		var handler http.Handler
-		handler, err := jsoncall.NewHttpHandler(&Example{})
-		if err != nil {
-			return err
-		}
-		return http.ListenAndServe(":8080", handler)
-	}
-
-## POST request
-A client can call this server by making an HTTP POST request to 
-http://localhost:8080/A with body:
-
-	{"p1":"a","p2":2}
-	
-For example, using curl:
-
-	curl --data-binary '{"p1":"a","p2":2}' http://localhost:8080/A
-
-It should get a response like this:
-
-	{"result":"a:2"}
-	
-
-## The server can specify the served methods with an interface
-
-	type ExampleInterface interface {
-		A(s string, d int) (string, error)
-	}
-
-	var api *ExampleInterface
-	handler, err := jsoncall.NewHttpHandler(api)
-	handler.SetReceiver(&Example{})
-
-## The server can use a function that returns a receiver for each request
-	func ExampleReceiver(w http.ResponseWriter, r *http.Request) {
-		...
-		return &Example{}
-	}
-
-	handler.SetReceiverFunc(ExampleReceiver)
-
-
-# Go client, without using generated code:
-	var example *ExampleInterface
-	caller, err := jsoncall.NewCaller(example, nil)
-	client := caller.NewHttpClient("http://localhost:8080/")
-
-	var response map[string]any
-	err = client.Call(&response, "A", "hello", 2)
-
-# Go client, with generated code:
-An included code generator, generates client code that implements
-the same interface used by the server.
-
-Generated code is necessary, because Go does not have a mechanism
-to implement an interface at runtime using reflection.
-
-	client, err := generated.NewExampleClient()
-	if err != nil {
-		return err
-	}
-	s, err := client.A("hello", 7)
-
-# Generating a Go client stub for an interface
-	import "melato.org/jsoncall/generate"
-
-	g := generate.NewGenerator()
-	g.Func = "NewExampleClient"
-	g.OutputFile = "../generated/example.go"
-	g.Package = "generated"
-
-	var example *ExampleInterface
-	caller, err := jsoncall.NewCaller(example, nil)
-	if err != nil {
-		return err
-	}
-	return g.Output(g.GenerateClient(caller))
-
-# ApiDescriptor
-The name of the method in the URL, and the JSON keys
-for the method inputs and outputs can be specified with an ApiDescriptor.
-If there is no explicit API descriptor provided, a default descriptor is used.
-An api descriptor is typically specified as an embedded JSON file,
-which can be generated as follows:
-
-```
-var example *ExampleInterface
-desc := generate.GenerateDescriptor(example)
-json.Marshal(desc)
-```
-The resulting JSON is:
-```
-[
- {
-  "in": [
-   "p1",
-   "p2"
-  ],
-  "method": "A",
-  "out": [
-   "result",
-   "error"
-  ],
-  "path": "A"
- },
- {
-  "method": "B",
-  "out": [
-   "result"
-  ],
-  "path": "B"
- }
-]
-```
-
-# Code generator
-The package melato.org/jsoncall/generate
-- Generates .json API descriptor files or updates then with new methods.
-- Generates Go client code that implements the Go interface used by the server,
-and makes the corresponding requests.
-
 # Goals/Features
 - Use reflection to automatically marshal/unmarshal Go method inputs/outputs.
-- Usable from Go or from other languages.
+- The server uses a well-defined protocol that can be called from other languages.
+- The optional Go client code uses a generated stub to implement a Go interface that
+  is implemented by marshalling method parameters to HTTP calls 
+  and unmarshalling the outputs from the response.
 - Encapsulate all method parameters into a single JSON object
 - Encapsulate all method outputs into a single JSON object
 - Support any input parameter or output value that can be marshalled/unmarshalled to/from JSON.
 - Marshal/unmarshal inputs/outputs, using encoding/json with a single call to json.Marshal, json.Unmarshal.
+
+# steps
+To create a Go client and a Go server that communicate via a HTTP,
+the following steps need to be done:
+- create an Api interface type
+- create a struct type that implements the Api.  It will be run on the server.
+- generate a JSON descriptor file, via the descriptor generator (optional)
+- edit the descriptor file by hand to customize method, input, and output names (optional)
+- generate a client stub, via a provided code generator.  (needed only by the client).
+- compile the client and the server
+
+# Example server (full)
+This example uses an interface, and a custom api descriptor.
+## common code
+	package example
+	import (
+		_ "embed"
+		"net/http"
+		
+		"melato.org/jsoncall"
+	)
+
+	type Demo interface {
+		Repeat(s string, count int) ([]string, error)
+	}
+	
+	//go:embed demo.json
+	var demoNames []byte
+	
+	func NewDemoCaller() (*jsoncall.Caller, error) {
+		var api *Demo
+		return jsoncall.NewCaller(api, demoNames)
+	}
+
+## server code
+	import (
+		"example"
+	)
+
+	type DemoImpl struct {}
+	func (t *DemoImpl) Repeat(s string, count int) ([]string, error) {
+		if count < 0 {
+			return nil, fmt.Errorf("negative count: %d", count)
+		}
+		list := make([]string, count)
+		for i := 0; i < count; i++ {
+			list[i] = s
+		}
+		return list, nil
+	}
+
+	type Server struct {}
+	
+	func (t *Server) DemoReceiver(w http.ResponseWriter, r *http.Request) interface{} {
+		return &example.DemoImpl{}
+	}
+
+	func (t *Server) Run() error {
+		demoCaller, err := example.NewDemoCaller()
+		if err != nil {
+			return err
+		}
+		mux := http.NewServeMux()
+		mux.Handle("/demo/", demoCaller.NewHttpHandler(t.DemoReceiver)
+	
+		return http.ListenAndServe(":8080", mux)
+	}
+		
+## client code
+	func NewDemoClient() (example.Demo, error) {
+		caller, err := example.NewDemoCaller()
+		if err != nil {
+			return nil, err
+		}
+		c := caller.NewHttpClient("http://localhost:8081/demo/")
+		return generated.NewDemoClient(c), nil
+	}
+
+
+# Generating a Go client stub
+	package main
+	
+	import (		
+		"example"
+		"melato.org/jsoncall/generate"
+	)
+
+	func GenerateStub() error {
+		var g generate.Generator
+		g.Init()
+		g.Package = "generated"
+		g.Type = "exampleClient"
+		g.Func = "NewDemoClient"
+		g.OutputFile = "../generated/generated_example.go"
+		g.Package = "generated"
+		//g.Imports = []string{"example/a", "example/b"}
+		caller, err := example.NewExampleCaller()
+		if err != nil {
+			return err
+		}
+		return g.Output(g.GenerateClient(caller))
+	}
+	
+# Updating the JSON API descriptor
+The API descriptor is an optional JSON file.
+When the API changes, by adding or removing methods, you need to update the API descriptor by hand.
+To facilitate updating, there is a tool that automatically updates the JSON file.
+It removes methods that are no longer in the API interface.
+It adds new methods, using default naming conventions for the method names and their parameters.
+You can then edit the file by hand to replace the default names with custom names.
+
+	package main
+	import (
+		"melato.org/jsoncall/generate"		
+	)
+	func Main() {
+		var api *example.Example
+		err := generate.UpdateDescriptor(api, "../api.json")
+		if err != nil {
+			fmt.Println(err)
+		}		
+	}
+
+To create an initial API descriptor, you can create an empty api.json file,
+and then update it with the code above.
+
+# API descriptor example
+	[
+	 {
+	  "method": "Repeat",
+	  "path": "repeat",
+	  "in": [
+	   "s",
+	   "count"
+	  ],
+	  "out": [
+	   "result",
+	   "error"
+	  ]
+	 }
+    ]
+
+
+## POST request
+A client can call this server by making an HTTP POST request to 
+http://localhost:8080/demo/repeat with body:
+
+	{"s":"a","count":2}
+	
+For example, using curl:
+
+	curl --data-binary '{"s":"a","count":2}' http://localhost:8080/repeat
+
+It should get a response like this:
+
+	{"result":["a","a"]}
+	
 
 # JSON protocol
 The chosen protocol has some similarities with JSON-RPC 2.0, but does not follow it entirely.

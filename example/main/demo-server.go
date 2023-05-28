@@ -42,12 +42,12 @@ func (t *Server) MathReceiver(w http.ResponseWriter, r *http.Request) interface{
 }
 
 // RunMux demostrates how to use http.ServeMux to implement a server that handles multiple interfaces
-func (t *Server) Run() error {
-	mux := http.NewServeMux()
+func (t *Server) RunFull() error {
 	demoCaller, err := example.NewDemoCaller()
 	if err != nil {
 		return err
 	}
+	mux := http.NewServeMux()
 	mux.Handle("/demo/", demoCaller.NewHttpHandler(t.DemoReceiver))
 
 	var math *example.Math
@@ -86,7 +86,7 @@ func main() {
 	var cmd command.SimpleCommand
 	var serverOps Server
 	cmd.Flags(&serverOps)
-	cmd.Command("run").RunFunc(serverOps.Run)
+	cmd.Command("full").RunFunc(serverOps.RunFull)
 	cmd.Command("receiver").RunFunc(serverOps.RunDirect)
 	cmd.Command("interface").RunFunc(serverOps.RunInterface)
 	usage.Apply(&cmd, usageData)

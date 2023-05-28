@@ -67,6 +67,9 @@ func (t *DemoImpl) TimePointer() *Time {
 }
 
 func (t *DemoImpl) Repeat(s string, count int) ([]string, error) {
+	if count < 0 {
+		return nil, fmt.Errorf("negative count: %d", count)
+	}
 	list := make([]string, count)
 	for i := 0; i < count; i++ {
 		list[i] = s

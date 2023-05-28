@@ -38,12 +38,12 @@ func (t *ClientOps) newMathClient() (jsoncall.Client, error) {
 	return caller.NewHttpClient(t.Url + "math/"), nil
 }
 
-func (t *ClientOps) NewDemoClient(url string) (example.Demo, error) {
+func (t *ClientOps) NewDemoClient() (example.Demo, error) {
 	caller, err := example.NewDemoCaller()
 	if err != nil {
 		return nil, err
 	}
-	c := caller.NewHttpClient("http://localhost:8080/demo/")
+	c := caller.NewHttpClient(t.Url + "demo/")
 	return generated.NewDemoClient(c), nil
 }
 
@@ -54,7 +54,7 @@ func (t *ClientOps) Configured() error {
 		jsoncall.TraceData = true
 	}
 	var err error
-	t.demo, err = t.NewDemoClient(t.Url)
+	t.demo, err = t.NewDemoClient()
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,10 @@
 short: demo server
+long: |
+  Each server command runs a server with different capabilities.
+  All commands implement the "div" client command and the math API.  
 commands:
-  run:
-    short: run the server
+  full:
+    short: full server
     long: |
       Start a server with two receivers and interfaces.
       One of the interfaces has an ApiDescriptor specified via an embedded JSON file.
