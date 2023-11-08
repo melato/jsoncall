@@ -4,7 +4,7 @@ import (
 	"melato.org/jsoncall"
 )
 
-func TraceMap() map[string]*bool {
+func TraceVariables() map[string]*bool {
 	return map[string]*bool{
 		"data":  &jsoncall.TraceData,
 		"calls": &jsoncall.TraceCalls,
