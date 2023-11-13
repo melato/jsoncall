@@ -1,29 +1,16 @@
 package jsoncall
 
 import (
-	"fmt"
+	_ "embed"
 )
 
-func traceVariables() map[string]*bool {
-	return map[string]*bool{
-		"data":  &TraceData,
-		"calls": &TraceCalls,
-		"init":  &TraceInit,
-	}
-}
-
-func TraceVariables() map[string]*bool {
-	fmt.Printf("TraceVariables is deprecated.  Use TraceFuncs\n")
-	return traceVariables()
-}
-
-func traceFunc(v *bool) func(bool) { return func(b bool) { *v = b } }
+//go:embed trace.yaml
+var TraceDescriptions []byte
 
 func TraceFuncs() map[string]func(bool) {
-	funcs := make(map[string]func(bool))
-	for name, v := range traceVariables() {
-		funcs[name] = traceFunc(v)
+	return map[string]func(bool){
+		"data":  func(b bool) { TraceData = b },
+		"calls": func(b bool) { TraceCalls = b },
+		"init":  func(b bool) { TraceInit = b },
 	}
-	return funcs
-
 }
