@@ -28,6 +28,7 @@ type HttpHandler struct {
 	ReceiverFunc ReceiverFunc
 	Caller       *Caller
 	methodPaths  map[string]*Method
+	synchronizer func(func())
 }
 
 func (caller *Caller) NewHttpHandler(receiver ReceiverFunc) *HttpHandler {
@@ -54,7 +55,18 @@ func NewHttpHandler(prototype interface{}) (*HttpHandler, error) {
 	}
 	handler := caller.NewHttpHandler(nil)
 	handler.SetReceiver(prototype)
+	handler.synchronizer = func(f func()) { f() }
 	return handler, nil
+}
+
+// SetSynchronizer installs a synchronizer.
+// A synchronizer is a function that wraps another function call,
+// in order to provide synchronization.
+// The default synchronizer runs functions immediately.
+// If synchronization is desired, set a synchronizer
+// that runs functions sequentially in a single goroutine.
+func (t *HttpHandler) SetSynchronizer(synchronizer func(func())) {
+	t.synchronizer = synchronizer
 }
 
 // SetReceiverFunc specifies a function that is called for each request to produce
@@ -92,7 +104,7 @@ func (t *HttpHandler) writeError(w http.ResponseWriter, status int, e error) {
 	t.writeResponse(w, status, data)
 }
 
-func (t *HttpHandler) DoService(receiver interface{}, m *Method, w http.ResponseWriter, r *http.Request) {
+func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
 	inputData, err := t.getBytes(r)
 	if TraceData {
 		fmt.Printf("getBytes: %d %v\n", len(inputData), err)
@@ -102,7 +114,20 @@ func (t *HttpHandler) DoService(receiver interface{}, m *Method, w http.Response
 	status := http.StatusInternalServerError
 	var errCode ErrorCode
 	if err == nil {
-		outputData, errCode, err = m.Call(receiver, inputData)
+		var receiver interface{}
+		var outputData []byte
+		var err error
+
+		t.synchronizer(func() {
+			if t.ReceiverFunc != nil {
+				receiver = t.ReceiverFunc(w, r)
+			}
+			if receiver == nil {
+				return
+			}
+
+			outputData, errCode, err = m.Call(receiver, inputData)
+		})
 		if TraceData {
 			fmt.Printf("call result: %s %v\n", string(outputData), err)
 		}
@@ -142,24 +167,6 @@ func (c *methodContext) WriteHeader(statusCode int) {
 
 func (c *methodContext) MethodName() string {
 	return c.method.Desc.Method
-}
-
-func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Request) {
-	var receiver interface{}
-	if t.ReceiverFunc != nil {
-		receiver = t.ReceiverFunc(w, r)
-	}
-	if receiver != nil {
-		t.DoService(receiver, m, w, r)
-	}
-	/*
-		else {
-			outputData, err2 := json.Marshal(ToError(err))
-			if err2 == nil {
-				w.Write(outputData)
-			}
-		}
-	*/
 }
 
 func (t *HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
