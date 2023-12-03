@@ -39,6 +39,7 @@ func (caller *Caller) NewHttpHandler(receiver ReceiverFunc) *HttpHandler {
 	for _, m := range t.Caller.methods {
 		t.methodPaths[m.Desc.Path] = m
 	}
+	t.synchronizer = func(f func()) { f() }
 	return &t
 }
 
@@ -55,7 +56,6 @@ func NewHttpHandler(prototype interface{}) (*HttpHandler, error) {
 	}
 	handler := caller.NewHttpHandler(nil)
 	handler.SetReceiver(prototype)
-	handler.synchronizer = func(f func()) { f() }
 	return handler, nil
 }
 
