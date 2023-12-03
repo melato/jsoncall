@@ -94,6 +94,9 @@ func (t *HttpHandler) getBytes(r *http.Request) ([]byte, error) {
 }
 
 func (t *HttpHandler) writeResponse(w http.ResponseWriter, status int, data []byte) {
+	if TraceCalls {
+		fmt.Printf("writeRespose status=%d len(data)=%d\n", status, len(data))
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(data)
@@ -115,8 +118,6 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 	var errCode ErrorCode
 	if err == nil {
 		var receiver interface{}
-		var outputData []byte
-		var err error
 
 		t.synchronizer(func() {
 			if t.ReceiverFunc != nil {
@@ -129,7 +130,7 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 			outputData, errCode, err = m.Call(receiver, inputData)
 		})
 		if TraceData {
-			fmt.Printf("call result: %s %v\n", string(outputData), err)
+			fmt.Printf("call result: %s %v\n", outputData, err)
 		}
 		switch errCode {
 		case ErrNone:
