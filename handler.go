@@ -95,7 +95,7 @@ func (t *HttpHandler) getBytes(r *http.Request) ([]byte, error) {
 
 func (t *HttpHandler) writeResponse(w http.ResponseWriter, status int, data []byte) {
 	if TraceCalls {
-		fmt.Printf("writeRespose status=%d len(data)=%d\n", status, len(data))
+		fmt.Printf("writeResponse status=%d len(data)=%d\n", status, len(data))
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
