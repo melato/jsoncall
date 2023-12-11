@@ -14,3 +14,13 @@ func TraceFuncs() map[string]func(bool) {
 		"init":  func(b bool) { TraceInit = b },
 	}
 }
+
+type Trace struct {
+}
+
+func (t *Trace) Funcs() map[string]func(bool) {
+	return TraceFuncs()
+}
+func (t *Trace) Descriptions() []byte {
+	return TraceDescriptions
+}
