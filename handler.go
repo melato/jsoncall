@@ -118,6 +118,7 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 	var errCode ErrorCode
 	if err == nil {
 		var receiver interface{}
+		done := make(chan struct{})
 
 		t.synchronizer(func() {
 			if t.ReceiverFunc != nil {
@@ -128,7 +129,10 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 			}
 
 			outputData, errCode, err = m.Call(receiver, inputData)
+			done <- struct{}{}
 		})
+		_ = <-done
+
 		if TraceData {
 			fmt.Printf("call result: %s %v\n", outputData, err)
 		}
