@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"path"
+
+	"melato.org/jsoncall/internal/syncf"
 )
 
 // ReceiverFunc is a function that is called at the beginning of each request
@@ -67,6 +69,13 @@ func NewHttpHandler(prototype interface{}) (*HttpHandler, error) {
 // that runs functions sequentially in a single goroutine.
 func (t *HttpHandler) SetSynchronizer(synchronizer func(func())) {
 	t.synchronizer = synchronizer
+}
+
+// SetSynchronized installs a built-in synchronizer
+// see SetSynchronizer
+func (t *HttpHandler) SetSynchronized() {
+	synchronizer := syncf.NewFuncQueue()
+	t.SetSynchronizer(synchronizer.RunAsync)
 }
 
 // SetReceiverFunc specifies a function that is called for each request to produce
