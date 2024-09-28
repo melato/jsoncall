@@ -126,21 +126,25 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 	status := http.StatusInternalServerError
 	var errCode ErrorCode
 	if err == nil {
-		var receiver interface{}
-		done := make(chan struct{})
+		done := make(chan struct{}, 1)
 
 		t.synchronizer(func() {
 			if t.ReceiverFunc != nil {
-				receiver = t.ReceiverFunc(w, r)
-			}
-			if receiver == nil {
-				return
+				receiver := t.ReceiverFunc(w, r)
+				if receiver != nil {
+					outputData, errCode, err = m.Call(receiver, inputData)
+				}
 			}
 
-			outputData, errCode, err = m.Call(receiver, inputData)
 			done <- struct{}{}
 		})
+		if TraceCalls {
+			fmt.Printf("waiting for synchronization...\n")
+		}
 		_ = <-done
+		if TraceCalls {
+			fmt.Printf("done\n")
+		}
 
 		if TraceData {
 			fmt.Printf("call result: %s %v\n", outputData, err)
