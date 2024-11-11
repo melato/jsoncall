@@ -73,9 +73,12 @@ func (t *HttpHandler) SetSynchronizer(synchronizer func(func())) {
 
 // SetSynchronized installs a built-in synchronizer
 // see SetSynchronizer
+// this method creates a channel and starts a goroutine
+// that serializes calls.
 func (t *HttpHandler) SetSynchronized() {
-	synchronizer := syncf.NewFuncQueue()
-	t.SetSynchronizer(synchronizer.RunAsync)
+	queue := make(syncf.Queue)
+	go queue.Evaluate()
+	t.SetSynchronizer(queue.Put)
 }
 
 // SetReceiverFunc specifies a function that is called for each request to produce
