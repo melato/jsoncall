@@ -1,3 +1,6 @@
+// Copyright 2024 Alex Athanasopoulos.
+// SPDX-License-Identifier: Apache-2.0
+
 package example
 
 // Demo - the interface for remote calls

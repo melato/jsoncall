@@ -1,3 +1,6 @@
+// Copyright 2024 Alex Athanasopoulos.
+// SPDX-License-Identifier: Apache-2.0
+
 /*
 Package jsoncall facilitates creating HTTP web services from Go interfaces,
 using reflection to marshal/unmarshal Go method inputs/outputs to/from a single JSON object.

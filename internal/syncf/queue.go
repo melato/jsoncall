@@ -1,3 +1,6 @@
+// Copyright 2024 Alex Athanasopoulos.
+// SPDX-License-Identifier: Apache-2.0
+
 package syncf
 
 // Queue - a channel of functions that are called in one or more goroutines
