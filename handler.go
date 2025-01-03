@@ -129,8 +129,9 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 	}
 
 	var outputData []byte
-	status := http.StatusInternalServerError
-	var errCode ErrorCode
+	var errCode ErrorCode = ErrNone
+	var hasReceiver bool
+	var status int
 	if err == nil {
 		done := make(chan struct{}, 1)
 
@@ -139,6 +140,7 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 				receiver := t.ReceiverFunc(w, r)
 				if receiver != nil {
 					outputData, errCode, err = m.Call(receiver, inputData)
+					hasReceiver = true
 				}
 			}
 
@@ -152,6 +154,12 @@ func (t *HttpHandler) ServeMethod(m *Method, w http.ResponseWriter, r *http.Requ
 			fmt.Printf("done\n")
 		}
 
+		if !hasReceiver {
+			if TraceData {
+				fmt.Printf("no receiver\n")
+			}
+			return
+		}
 		if TraceData {
 			fmt.Printf("call result: %s %v\n", outputData, err)
 		}
